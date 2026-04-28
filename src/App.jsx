@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import Portal from './pages/Portal';
 import Home from './pages/Home';
 import BridgeDetail from './pages/BridgeDetail';
 import ReportBridge from './pages/ReportBridge';
@@ -17,7 +18,7 @@ function App() {
             <span style={{ fontSize: '1.2rem' }}>🌉</span> TruthBridge
           </div>
           <div className="nav-links">
-            <a href="/" className="nav-item">Live Map</a>
+            <a href="/map" className="nav-item">Live Map</a>
             <a href="/truth" className="nav-item">Truth Counter</a>
             <a href="/report" className="btn-primary">Report Damage</a>
           </div>
@@ -25,7 +26,8 @@ function App() {
         
         <Routes>
           {/* Public routes */}
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<Portal />} />
+          <Route path="/map" element={<Home />} />
           <Route path="/bridge/:id" element={<BridgeDetail />} />
           <Route path="/report" element={<ReportBridge />} />
           <Route path="/report/:bridgeId" element={<ReportBridge />} />

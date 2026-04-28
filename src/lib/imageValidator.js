@@ -1,14 +1,16 @@
 /**
  * TruthBridge — Image Validator
  * 
- * DEMO MODE for hackathon presentation.
- * AI detection validation is staged for production.
- * 
- * Current behavior: Shows "validating" state, allows all uploads.
- * Production behavior: Calls Hive API, rejects AI-generated images.
+ * Flow:
+ * 1. Upload image to Supabase Storage (public bucket)
+ * 2. Send public URL to Hive API
+ * 3. Reject if AI-generated
  */
 
-const DEMO_MODE = true;
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './supabase';
+
+const HIVE_API_URL = 'https://api.hivemoderation.com/api/v1/task/sync';
+const HIVE_API_KEY = 'MaOwSJRudzFJPzGZdveRGg==';
 const CONFIDENCE_THRESHOLD = 0.75;
 
 export async function validateImage(file) {
@@ -16,64 +18,55 @@ export async function validateImage(file) {
     return { valid: true, message: 'No file to validate' };
   }
 
-  // DEMO MODE: Simulate validation for hackathon demo
-  if (DEMO_MODE) {
-    console.log('[Validate] Demo mode - simulating validation');
-    
-    // Simulate a brief delay for realism
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // Demo: Check basic file properties
-    const sizeMB = file.size / (1024 * 1024);
-    const fileName = file.name.toLowerCase();
-    
-    // If filename suggests AI, reject for demo
-    const aiPatterns = ['midjourney', 'dalle', 'stable diffusion', 'flux', 'ai_', 'ai-generated', 'ai_gen'];
-    for (const pattern of aiPatterns) {
-      if (fileName.includes(pattern)) {
-        return {
-          valid: false,
-          message: `AI-generated images are not allowed. Please upload original photos of the bridge damage only.`,
-          details: { demo: true }
-        };
-      }
-    }
-    
-    // Demo mode: accept all real photos
-    return {
-      valid: true,
-      message: 'Image verified as original',
-      details: { demo: true, fileSize: `${sizeMB.toFixed(2)} MB` }
-    };
-  }
-
-  // PRODUCTION MODE: Real AI detection via Supabase Edge Function
   try {
-    const EDGE_FUNCTION_URL = `https://gacrmgjzdlknsfhsfpvb.supabase.co/functions/v1/validate-image`;
-    const VALIDATE_API_KEY = 'tb-validate-2026';
+    // Step 1: Upload to Supabase Storage
+    const fileName = `${Date.now()}_${Math.random().toString(36).slice(2)}.${file.name.split('.').pop()}`;
+    const filePath = `temp/${fileName}`;
 
-    const formData = new FormData();
-    formData.append('media', file);
-
-    const response = await fetch(EDGE_FUNCTION_URL, {
+    const { error: uploadError } = await fetch(`${SUPABASE_URL}/storage/v1/object/report-photos/${filePath}`, {
       method: 'POST',
       headers: {
-        'x-api-key': VALIDATE_API_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'apikey': SUPABASE_ANON_KEY,
+        'x-upsert': 'true',
+        'Content-Type': file.type,
       },
-      body: formData,
+      body: file,
+    });
+
+    if (uploadError) {
+      console.error('Upload error:', uploadError);
+      return { valid: true, message: 'Validation skipped - upload failed' };
+    }
+
+    // Step 2: Get public URL
+    const imageUrl = `${SUPABASE_URL}/storage/v1/object/public/report-photos/${filePath}`;
+
+    // Step 3: Send to Hive API
+    const response = await fetch(HIVE_API_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Token ${HIVE_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        url: imageUrl,
+        models: ['ai_generated_media'],
+      }),
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error('Edge function error:', errorData);
-      return { valid: true, message: 'Validation skipped - service temporarily unavailable' };
+      console.error('Hive API error:', response.status);
+      return { valid: true, message: 'Validation skipped - service unavailable' };
     }
 
     const data = await response.json();
+    console.log('[Validate] Hive result:', data);
+
     const result = data?.result;
 
     if (!result) {
-      return { valid: true, message: 'Could not analyze image - allowing submission' };
+      return { valid: true, message: 'Could not analyze image' };
     }
 
     const isAIGenerated = result.is_ai_generated === true || 
@@ -86,7 +79,7 @@ export async function validateImage(file) {
         valid: false,
         message: `AI-generated images are not allowed. Detected ${result.generator || 'AI-generated'} content (${Math.round(confidence * 100)}% confidence). Please upload original photos only.`,
         details: {
-          generator: result.generator || 'Unknown AI',
+          generator: result.generator,
           confidence: Math.round(confidence * 100),
         }
       };

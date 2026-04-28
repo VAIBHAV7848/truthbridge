@@ -8,6 +8,9 @@ import { createBridge } from '../../lib/bridges'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { useToast } from '../../context/ToastContext'
+import { exportToCSV, exportToPDF, getReportStats } from '../../lib/exportReports'
+import InspectionScheduler from '../../components/InspectionScheduler'
 
 const BridgeSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters'),
@@ -157,9 +160,24 @@ export default function AdminDashboard() {
   const { authority, loading: authLoading, isAdmin } = useAuth()
   const { bridges, loading: bridgesLoading, refetch: refetchBridges } = useBridges()
   const navigate = useNavigate()
+  const { showToast } = useToast()
   const [pendingReports, setPendingReports] = useState([])
   const [reportsLoading, setReportsLoading] = useState(true)
   const [addBridgeOpen, setAddBridgeOpen] = useState(false)
+
+  // Export handlers
+  const handleExportCSV = () => {
+    const allReports = pendingReports; // In real app, fetch all reports
+    exportToCSV(allReports, bridges, 'truthbridge-reports');
+    showToast('CSV export downloaded', 'success');
+  };
+
+  const handleExportPDF = () => {
+    const allReports = pendingReports;
+    const stats = getReportStats(allReports);
+    exportToPDF(allReports, bridges, stats, 'truthbridge-reports');
+    showToast('PDF export opened in new tab', 'success');
+  };
 
   useEffect(() => {
     if (!authLoading && !isAdmin) {
@@ -227,6 +245,8 @@ export default function AdminDashboard() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
           <span className="text-gray">{String(authority?.name || 'Admin')} · {String(authority?.role || '')}</span>
           <button className="btn-primary" onClick={() => navigate('/admin/analytics')} style={{ background: 'rgba(255,255,255,0.1)' }}>📊 Analytics</button>
+          <button className="btn-primary" onClick={handleExportCSV} style={{ background: 'rgba(16,185,129,0.2)', color: '#34d399' }}>📥 CSV</button>
+          <button className="btn-primary" onClick={handleExportPDF} style={{ background: 'rgba(59,130,246,0.2)', color: '#60a5fa' }}>📄 PDF</button>
           <button className="btn-primary" onClick={handleLogout}>Logout</button>
         </div>
       </div>
@@ -263,6 +283,10 @@ export default function AdminDashboard() {
         {pendingReports.length > 0 ? pendingReports.map(r => (
           <ReportRow key={r.id} report={r} onUpdate={updateReport} />
         )) : <p className="text-gray">No reports require action at this time.</p>}
+      </div>
+
+      <div style={{ marginBottom: '3rem' }}>
+        <InspectionScheduler bridges={bridges} />
       </div>
 
       <div style={{ textAlign: 'left' }}>

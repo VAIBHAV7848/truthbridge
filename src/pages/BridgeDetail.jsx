@@ -5,6 +5,7 @@ import { useBridge } from '../hooks/useBridges'
 import { getRainfall } from '../lib/weather'
 import { supabase } from '../lib/supabase'
 import { computeAccountabilityScore, getAccountabilityLabel } from '../lib/accountabilityScore'
+import ReportVerification from '../components/ReportVerification'
 
 function getTimerBadge(status, createdAt) {
   const days = Math.floor((Date.now() - new Date(createdAt).getTime()) / 86400000)
@@ -200,6 +201,12 @@ export default function BridgeDetail() {
                 {r.description && <p style={{ marginBottom: '1rem', fontStyle: 'italic' }}>"{r.description}"</p>}
                 <span className="badge" style={{ background: `${tb.color}22`, color: tb.color, border: `1px solid ${tb.color}44`, display: 'inline-block' }}>{tb.text}</span>
                 {r.photo_url && <img src={r.photo_url} alt="Report" style={{ width: '100%', borderRadius: 8, marginTop: 12, maxHeight: 200, objectFit: 'cover' }} />}
+                <ReportVerification
+                  reportId={r.id}
+                  bridgeId={bridge.id}
+                  initialCount={r.verification_count || 0}
+                  isOwnReport={r.citizen_id === null}
+                />
               </div>
             )
           }) : <p className="text-gray">No reports filed for this bridge.</p>}

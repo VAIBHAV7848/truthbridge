@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { SkeletonList, SkeletonReportCard } from '../components/Skeleton'
+import ReportVerification from '../components/ReportVerification'
 
 function timeAgo(dateStr) {
   const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000)
@@ -141,6 +142,12 @@ export default function ReportFeed() {
                   </div>
                   {r.description && <p style={{ marginBottom: '0.75rem', fontStyle: 'italic', color: '#94a3b8', fontSize: '0.95rem' }}>"{r.description}"</p>}
                   {r.photo_url && <img src={r.photo_url} alt="Report evidence" onClick={() => setLightbox(r.photo_url)} style={{ width: '100%', maxHeight: 240, objectFit: 'cover', borderRadius: 8, cursor: 'zoom-in', border: '1px solid var(--color-glass-border)' }} />}
+                  <ReportVerification 
+                    reportId={r.id} 
+                    bridgeId={r.bridge_id}
+                    initialCount={r.verification_count || 0}
+                    isOwnReport={r.citizen_id === null} // Simplified check
+                  />
                 </div>
               )
             })}

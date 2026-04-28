@@ -33,10 +33,21 @@ export default function CitizenAuth() {
     return null;
   }
 
-  async function handleSubmit(e) {
+  // Simple rate limiting - prevent multiple rapid requests
+let lastRequestTime = 0;
+const MIN_REQUEST_INTERVAL = 3000; // 3 seconds between requests
+
+async function handleSubmit(e) {
     e.preventDefault();
     setError(null);
     setSuccess(null);
+
+    // Rate limiting check
+    const now = Date.now();
+    if (now - lastRequestTime < MIN_REQUEST_INTERVAL) {
+        setError('Please wait a few seconds before trying again.');
+        return;
+    }
 
     if (mode === 'signup') {
       if (password !== confirmPassword) {
@@ -50,6 +61,8 @@ export default function CitizenAuth() {
     }
 
     setLoading(true);
+    lastRequestTime = now;
+    
     try {
       if (mode === 'login') {
         const { data, error: signInError } = await supabase.auth.signInWithPassword({

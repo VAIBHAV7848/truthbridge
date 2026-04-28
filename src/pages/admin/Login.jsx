@@ -2,6 +2,9 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { signIn } from '../../lib/auth'
 
+let lastRequestTime = 0;
+const MIN_REQUEST_INTERVAL = 3000;
+
 export default function AdminLogin() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -11,8 +14,16 @@ export default function AdminLogin() {
 
   async function handleLogin(e) {
     e.preventDefault()
-    setLoading(true)
     setError(null)
+
+    const now = Date.now();
+    if (now - lastRequestTime < MIN_REQUEST_INTERVAL) {
+      setError('Please wait a few seconds before trying again.');
+      return;
+    }
+
+    setLoading(true)
+    lastRequestTime = now;
 
     try {
       await signIn(email, password)

@@ -1,29 +1,43 @@
 # Dependencies
+
 node_modules/
 
 # Build output
+
 dist/
 
 # Environment variables (contain secrets)
+
 .env
 .env.local
 .env.*.local
 
 # Supabase local config
+
 supabase/.temp/
 
 # Editor
+
 .vscode/
 .idea/
 *.swp
 *.swo
 
 # OS
+
 .DS_Store
 Thumbs.db
 
 # Logs
+
 *.log
 npm-debug.log*
 
-.vercel
+# Dataset (VERY IMPORTANT — prevents large uploads)
+
+data/
+dataset/
+
+# Vercel
+
+.vercel/

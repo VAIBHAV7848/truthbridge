@@ -58,7 +58,7 @@ CREATE TABLE bridges (
 
   -- structural details
   year_built              INT,
-  age                     INT GENERATED ALWAYS AS (EXTRACT(YEAR FROM now())::INT - year_built) STORED,
+
   bridge_type             TEXT,              -- "RCC Slab", "PSC Girder", etc.
   length_m                NUMERIC(10,2),
   width_m                 NUMERIC(10,2),

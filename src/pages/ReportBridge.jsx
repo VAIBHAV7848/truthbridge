@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { submitReport } from '../lib/reports'
 import { validateImage } from '../lib/imageValidator'
+import { useAuth } from '../context/AuthContext'
 
 const DAMAGE_TYPES = ['CRACK', 'SCOUR', 'RAILING_BROKEN', 'OVERLOADING', 'FOUNDATION', 'SPALLING', 'OTHER'];
 const SEVERITIES = ['VISIBLE', 'SERIOUS', 'DANGEROUS'];
@@ -11,10 +12,9 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024;
 export default function ReportBridge() {
   const { bridgeId } = useParams();
   const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
   const fileInputRef = useRef(null);
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -26,14 +26,6 @@ export default function ReportBridge() {
   const [photoPreview, setPhotoPreview] = useState(null);
   const [dragOver, setDragOver] = useState(false);
   const [imageVerified, setImageVerified] = useState(false);
-
-  // Check auth state
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-  }, []);
 
   // Restore offline draft
   useEffect(() => {
@@ -72,13 +64,7 @@ export default function ReportBridge() {
   async function handleSubmit(e) {
     e.preventDefault();
     
-    // Check if user is logged in
-    if (!user) {
-      setShowLoginPrompt(true);
-      setError('Please login to submit reports.');
-      return;
-    }
-    
+    if (!user) return setError('You must be logged in to submit a report.');
     if (!form.bridge_id) return setError('Please select a bridge.');
     if (!photo) return setError('Photo evidence is required.');
 
@@ -109,12 +95,37 @@ export default function ReportBridge() {
 
     setSubmitting(true); setError(null);
     try {
-      await submitReport(form, photo);
+      // Append user ID to the report submission so we can track the author
+      const finalForm = { ...form, citizen_id: user.id };
+      await submitReport(finalForm, photo);
       localStorage.setItem(localKey, '1');
       localStorage.removeItem('tb_draft_report');
       setSuccess(true);
     } catch (err) { setError(err.message); }
     finally { setSubmitting(false); }
+  }
+
+  if (authLoading) return (
+    <div className="page-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
+      <div className="spinner"></div>
+    </div>
+  );
+
+  if (!user) {
+    return (
+      <div className="page-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '70vh' }}>
+        <div className="glass-panel" style={{ maxWidth: 500, width: '100%', textAlign: 'center', padding: '3rem', animation: 'fadeInUp 0.5s ease' }}>
+          <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>🛡️</div>
+          <h2 style={{ fontSize: '1.8rem', marginBottom: '0.75rem' }}>Login Required</h2>
+          <p className="text-gray" style={{ marginBottom: '1.5rem', lineHeight: 1.6 }}>
+            To prevent spam and ensure the authenticity of reports, you must be logged in as a verified citizen to report bridge damage.
+          </p>
+          <button className="btn-primary" style={{ width: '100%', padding: '1rem', fontSize: '1.1rem' }} onClick={() => navigate('/citizen/login')}>
+            Go to Citizen Login →
+          </button>
+        </div>
+      </div>
+    );
   }
 
   if (success) return (
@@ -143,22 +154,7 @@ export default function ReportBridge() {
       <div className="glass-panel" style={{ maxWidth: '700px', margin: '0 auto', padding: '2rem', textAlign: 'left' }}>
         <h1 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '0.5rem' }}>📸 Report Bridge Damage</h1>
         
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: '2rem' }}>
-            <div className="spinner" style={{ margin: '0 auto' }}></div>
-          </div>
-        ) : showLoginPrompt ? (
-          <div style={{ background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: 12, padding: '1.5rem', marginBottom: '1.5rem' }}>
-            <div style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '0.5rem' }}>🔐 Login Required</div>
-            <p className="text-gray" style={{ marginBottom: '1rem' }}>
-              You must be logged in to submit verified bridge damage reports.
-            </p>
-            <div style={{ display: 'flex', gap: '1rem' }}>
-              <a href="/citizen/login" className="btn-primary" style={{ flex: 1, textAlign: 'center', padding: '0.8rem' }}>Login / Sign Up</a>
-              <button className="filter-btn" onClick={() => setShowLoginPrompt(false)}>Cancel</button>
-            </div>
-          </div>
-        ) : null}
+        <p className="text-gray" style={{ marginBottom: '0.5rem' }}>Photo evidence is required to submit a verified report.</p>
         
         <form onSubmit={handleSubmit} style={{ marginTop: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <label>

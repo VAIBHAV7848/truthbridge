@@ -2,16 +2,21 @@
  * TruthBridge — Image Validator
  * 
  * Flow:
- * 1. Upload image to Supabase Storage (public bucket)
- * 2. Send public URL to Hive API
- * 3. Reject if AI-generated
+ * 1. Convert file to Base64
+ * 2. Send Base64 to our Vercel Serverless proxy (/api/validate-image)
+ * 3. Proxy checks Hugging Face AI detection model securely
+ * 4. Reject if AI-generated
  */
 
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from './supabase';
-
-const HIVE_API_URL = 'https://api.hivemoderation.com/api/v1/task/sync';
-const HIVE_API_KEY = 'MaOwSJRudzFJPzGZdveRGg==';
 const CONFIDENCE_THRESHOLD = 0.75;
+
+// Helper to convert file to base64
+const fileToBase64 = (file) => new Promise((resolve, reject) => {
+  const reader = new FileReader();
+  reader.readAsDataURL(file);
+  reader.onload = () => resolve(reader.result);
+  reader.onerror = (error) => reject(error);
+});
 
 export async function validateImage(file) {
   if (!file) {
@@ -19,68 +24,48 @@ export async function validateImage(file) {
   }
 
   try {
-    // Step 1: Upload to Supabase Storage
-    const fileName = `${Date.now()}_${Math.random().toString(36).slice(2)}.${file.name.split('.').pop()}`;
-    const filePath = `temp/${fileName}`;
+    const base64String = await fileToBase64(file);
 
-    const { error: uploadError } = await fetch(`${SUPABASE_URL}/storage/v1/object/report-photos/${filePath}`, {
+    const response = await fetch('/api/validate-image', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-        'apikey': SUPABASE_ANON_KEY,
-        'x-upsert': 'true',
-        'Content-Type': file.type,
-      },
-      body: file,
-    });
-
-    if (uploadError) {
-      console.error('Upload error:', uploadError);
-      return { valid: true, message: 'Validation skipped - upload failed' };
-    }
-
-    // Step 2: Get public URL
-    const imageUrl = `${SUPABASE_URL}/storage/v1/object/public/report-photos/${filePath}`;
-
-    // Step 3: Send to Hive API
-    const response = await fetch(HIVE_API_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Token ${HIVE_API_KEY}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        url: imageUrl,
-        models: ['ai_generated_media'],
-      }),
+      body: JSON.stringify({ imageBase64: base64String }),
     });
 
     if (!response.ok) {
-      console.error('Hive API error:', response.status);
+      console.error('API Proxy error:', response.status);
       return { valid: true, message: 'Validation skipped - service unavailable' };
     }
 
     const data = await response.json();
-    console.log('[Validate] Hive result:', data);
+    console.log('[Validate] Hugging Face result:', data);
 
-    const result = data?.result;
-
-    if (!result) {
+    // Hugging face returns an array: [{ label: 'AI', score: 0.99 }, { label: 'Real', score: 0.01 }]
+    if (!Array.isArray(data) || data.length === 0) {
+      // In case of rate limits or Hugging Face errors, data might not be an array
+      if (data.error && data.error.includes("loading")) {
+          // Model is loading on Hugging Face, let it pass or wait
+          return { valid: true, message: 'Model loading, allowing submission' };
+      }
       return { valid: true, message: 'Could not analyze image' };
     }
 
-    const isAIGenerated = result.is_ai_generated === true || 
-                         result.is_ai_generated === 'true' ||
-                         String(result.is_ai_generated).toLowerCase() === 'true';
-    const confidence = parseFloat(result.confidence) || 0;
+    // Sort by highest score first
+    const topResult = data.sort((a, b) => b.score - a.score)[0];
 
-    if (isAIGenerated && confidence >= CONFIDENCE_THRESHOLD) {
+    // Check if the top guess implies AI or Fake
+    const label = topResult.label.toLowerCase();
+    const isAIGenerated = label.includes('ai') || label.includes('fake') || label.includes('generated');
+
+    if (isAIGenerated && topResult.score >= CONFIDENCE_THRESHOLD) {
       return {
         valid: false,
-        message: `AI-generated images are not allowed. Detected ${result.generator || 'AI-generated'} content (${Math.round(confidence * 100)}% confidence). Please upload original photos only.`,
+        message: `AI-generated images are not allowed (${Math.round(topResult.score * 100)}% confidence). Please upload original photos only.`,
         details: {
-          generator: result.generator,
-          confidence: Math.round(confidence * 100),
+          generator: 'AI Model',
+          confidence: Math.round(topResult.score * 100),
         }
       };
     }
@@ -92,6 +77,7 @@ export async function validateImage(file) {
 
   } catch (error) {
     console.error('Image validation error:', error);
+    // If it fails, let the user upload anyway so we don't block legitimate users
     return { valid: true, message: 'Validation check failed - allowing submission' };
   }
 }

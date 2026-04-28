@@ -29,7 +29,7 @@ TruthBridge shifts the power to the public. It relies on crowdsourced photograph
 
 ### 📡 1. Live Citizen Reporting (with Offline Support)
 Citizens can report bridge damage (cracks, scour, foundation sinking) directly from their phones.
-- **Anonymous:** No login required.
+- **Verified Accounts:** Requires Citizen Login to prevent spam and ensure accountability.
 - **Evidence-Based:** Enforces mandatory photo uploads (up to 5MB).
 - **Offline Mode:** If a user is deep in rural India with no signal, the Progressive Web App (PWA) Service Worker saves the report as a draft and uploads it automatically when the network returns.
 
@@ -56,6 +56,12 @@ Bridges are scored from 0–100 based on:
 - Admins can change report statuses (e.g., from `PENDING` to `ACTION_TAKEN`) and upload proof-of-repair photos.
 - Built-in data analytics (Recharts) show the distribution of bridge risk across different districts.
 
+### 🤖 6. AI-Powered Image Verification
+To prevent users from uploading fake or generated images to skew the accountability dashboard, TruthBridge features an AI Image Detector.
+- Uses a **Hugging Face Vision Transformer (ViT)** model (`dima806/ai_vs_real_image_detection`).
+- **Secure Backend Proxy:** The image is sent to a serverless Vercel function, converted to Base64 JSON, and verified securely via the Hugging Face Router API without exposing API keys to the frontend.
+- Instantly blocks uploads and warns the user if the image is detected as AI-generated with high confidence.
+
 ---
 
 ## 🛠️ Technology Stack
@@ -69,8 +75,9 @@ TruthBridge uses a modern **Supabase-first** architecture. We eliminated the nee
 - **Database Migrations:** Pure SQL
 - **Mapping:** React-Leaflet + OpenStreetMap + Leaflet.heat
 - **Data Visualization:** Recharts
+- **AI Integration:** Hugging Face Inference API (ViT Image Classification)
 - **Forms & Validation:** React-Hook-Form + Zod
-- **Hosting:** Vercel
+- **Hosting:** Vercel (Frontend & Serverless API proxy)
 
 ---
 
@@ -91,6 +98,9 @@ Create a `.env` file in the root folder. You don't need to create your own datab
 ```env
 VITE_SUPABASE_URL=https://truthbridge-six.vercel.app/api/supabase
 VITE_SUPABASE_ANON_KEY=sb_publishable_D48FvPXjvI6FmnnElSBOqw_Vue35aiM
+
+# Required for AI Image Validation
+HUGGING_FACE_API_KEY=your_huggingface_token_here
 ```
 
 ### 3. Start the App

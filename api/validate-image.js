@@ -1,11 +1,19 @@
 /**
  * TruthBridge — Image Validation Proxy
  * 
- * Vercel Serverless Function to proxy Hive API calls.
- * Avoids CORS issues by calling from server-side.
+ * Vercel Serverless Function to proxy Hugging Face API calls.
+ * Avoids CORS issues by calling from server-side and keeps token secure.
  */
 
-const HIVE_API_URL = 'https://api.thehive.ai/api/v1/task/sync';
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '10mb',
+    },
+  },
+};
+
+const HUGGING_FACE_API_URL = 'https://router.huggingface.co/hf-inference/models/dima806/ai_vs_real_image_detection';
 
 export default async function handler(req, res) {
   // Only allow POST
@@ -13,37 +21,42 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const HIVE_API_KEY = process.env.HIVE_API_KEY;
+  const HUGGING_FACE_API_KEY = process.env.HUGGING_FACE_API_KEY;
   
-  if (!HIVE_API_KEY) {
+  if (!HUGGING_FACE_API_KEY) {
     return res.status(500).json({ error: 'API key not configured' });
   }
 
   try {
-    const formData = await req.formData();
-    const image = formData.get('media');
+    const { imageBase64 } = req.body;
 
-    if (!image) {
-      return res.status(400).json({ error: 'No image' });
+    if (!imageBase64) {
+      return res.status(400).json({ error: 'No image provided' });
     }
 
-    // Forward to Hive
-    const proxyFormData = new FormData();
-    proxyFormData.append('media', image);
-    proxyFormData.append('models', JSON.stringify(['ai_generated_media']));
+    // Convert base64 back to buffer
+    const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, "");
+    const imageBuffer = Buffer.from(base64Data, 'base64');
 
-    const response = await fetch(HIVE_API_URL, {
+    const response = await fetch(HUGGING_FACE_API_URL, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${HIVE_API_KEY}`,
+        'Authorization': `Bearer ${HUGGING_FACE_API_KEY}`,
+        'Content-Type': 'application/octet-stream',
       },
-      body: proxyFormData,
+      body: imageBuffer,
     });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error('Hugging Face API Error:', errText);
+      return res.status(502).json({ error: 'Hugging Face API failed', details: errText });
+    }
 
     const data = await response.json();
     return res.status(200).json(data);
   } catch (error) {
     console.error('Proxy error:', error);
-    return res.status(500).json({ error: 'Validation failed' });
+    return res.status(500).json({ error: 'Validation failed', message: error.message });
   }
 }

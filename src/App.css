@@ -304,3 +304,74 @@ a:hover { color: #60a5fa; }
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 .flex-between { display: flex; justify-content: space-between; align-items: center; }
+/* ────────────────────────────────────────────────────────────
+   Dashboard & Layout Utilities
+   ──────────────────────────────────────────────────────────── */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; }
+
+.page-container { padding: 100px 2rem 2rem; max-width: 1400px; margin: 0 auto; }
+.section-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 1rem; border-bottom: 1px solid var(--color-glass-border); padding-bottom: 0.5rem; }
+
+/* Custom Cards */
+.card-dark { background: rgba(26, 26, 46, 0.9); border: 1px solid var(--color-glass-border); border-radius: 12px; padding: 1.5rem; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; }
+.card-red { background: linear-gradient(135deg, #7f1d1d, #450a0a); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px; padding: 1.5rem; box-shadow: 0 10px 30px rgba(239, 68, 68, 0.2); text-align: center; }
+.card-orange { background: linear-gradient(135deg, #9a3412, #431407); border: 1px solid rgba(249, 115, 22, 0.3); border-radius: 12px; padding: 1.5rem; box-shadow: 0 10px 30px rgba(249, 115, 22, 0.2); text-align: center; }
+
+.stat-title { font-size: 1.1rem; font-weight: 700; letter-spacing: 1px; color: rgba(255,255,255,0.8); margin-bottom: 0.5rem; text-transform: uppercase; }
+.stat-number { font-size: 5rem; font-weight: 900; line-height: 1; margin: 0.5rem 0; text-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+.stat-subtitle { font-size: 1.2rem; font-weight: 600; margin-bottom: 0.5rem; }
+.stat-source { font-size: 0.8rem; color: rgba(255,255,255,0.5); font-style: italic; }
+
+.banner-header { background: #7f1d1d; color: white; padding: 1rem; text-align: center; font-size: 1.5rem; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 2rem; border-radius: 8px; box-shadow: 0 4px 20px rgba(239, 68, 68, 0.3); }
+
+/* Counter styling */
+.ticking-counter { margin-top: 3rem; text-align: center; background: rgba(0,0,0,0.4); padding: 2rem; border-radius: 16px; border: 1px solid var(--color-glass-border); }
+.ticking-text { font-size: 1.5rem; font-weight: 600; color: var(--color-text-muted); }
+.ticking-number { font-size: 6rem; font-weight: 900; color: var(--color-critical); text-shadow: 0 0 30px var(--color-critical-glow); font-family: var(--font-mono); font-variant-numeric: tabular-nums; line-height: 1.1; margin: 0.5rem 0; }
+.ticking-sub { font-size: 1.2rem; color: #fca5a5; font-style: italic; }
+
+/* Truth Strip */
+.truth-strip { position: absolute; top: var(--nav-height); left: 0; right: 0; background: linear-gradient(to right, #450a0a, #000, #450a0a); color: #fca5a5; padding: 0.5rem 1rem; text-align: center; font-weight: 600; font-size: 0.9rem; z-index: 999; border-bottom: 1px solid rgba(239,68,68,0.3); display: flex; justify-content: center; gap: 2rem; }
+
+/* Form inputs */
+.form-input { width: 100%; padding: 0.8rem; margin-top: 0.5rem; background: rgba(0,0,0,0.5); border: 1px solid var(--color-glass-border); border-radius: 8px; color: #fff; font-family: inherit; transition: 0.2s; }
+.form-input:focus { outline: none; border-color: var(--color-accent); box-shadow: 0 0 0 2px var(--color-accent-glow); }
+.btn-danger { background: var(--color-critical); color: white; padding: 1rem 2rem; border-radius: 8px; font-weight: 700; font-size: 1.1rem; border: none; cursor: pointer; transition: 0.2s; width: 100%; box-shadow: 0 4px 15px var(--color-critical-glow); }
+.btn-danger:hover { background: #b91c1c; transform: translateY(-2px); box-shadow: 0 6px 20px var(--color-critical-glow); }
+.btn-danger:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+/* Bridge Detail Status Banners */
+.detail-banner { padding: 2rem; border-radius: 16px; margin-bottom: 2rem; color: white; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+.detail-banner h1 { font-size: 2.5rem; margin: 0 0 0.5rem 0; line-height: 1.1; }
+.detail-banner-critical { background: linear-gradient(135deg, #7f1d1d, #450a0a); border: 1px solid rgba(239,68,68,0.3); }
+.detail-banner-warning { background: linear-gradient(135deg, #7c2d12, #431407); border: 1px solid rgba(249,115,22,0.3); }
+.detail-banner-monitor { background: linear-gradient(135deg, #713f12, #422006); border: 1px solid rgba(245,158,11,0.3); }
+.detail-banner-safe { background: linear-gradient(135deg, #14532d, #064e3b); border: 1px solid rgba(16,185,129,0.3); }
+
+/* Progress Bars */
+.progress-container { width: 100%; background: rgba(0,0,0,0.5); border-radius: 10px; height: 16px; overflow: hidden; margin: 1rem 0; border: 1px solid var(--color-glass-border); }
+.progress-bar { height: 100%; transition: width 1s ease-in-out; }
+
+/* Report Cards */
+.report-card { background: rgba(255,255,255,0.02); border: 1px solid var(--color-glass-border); border-radius: 12px; padding: 1.5rem; transition: 0.2s; }
+.report-card:hover { border-color: rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); }
+.badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* Text Colors */
+.text-red { color: var(--color-critical); }
+.text-orange { color: var(--color-warning); }
+.text-yellow { color: var(--color-monitor); }
+.text-green { color: var(--color-safe); }
+.text-gray { color: var(--color-text-muted); }
+
+/* Filter Buttons */
+.filter-btn { background: rgba(255,255,255,0.05); border: 1px solid var(--color-glass-border); color: var(--color-text-muted); padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.8rem; cursor: pointer; transition: 0.2s; }
+.filter-btn:hover { background: rgba(255,255,255,0.1); color: white; }
+.filter-btn.active { background: white; color: black; font-weight: 600; border-color: white; }
+
+/* Skeleton */
+.skeleton { background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 75%); background-size: 200% 100%; animation: skeleton-loading 1.5s infinite; border-radius: 8px; }
+@keyframes skeleton-loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+

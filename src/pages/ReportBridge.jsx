@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { submitReport } from '../lib/reports'
+import { validateImage } from '../lib/imageValidator'
 
 const DAMAGE_TYPES = ['CRACK', 'SCOUR', 'RAILING_BROKEN', 'OVERLOADING', 'FOUNDATION', 'SPALLING', 'OTHER'];
 const SEVERITIES = ['VISIBLE', 'SERIOUS', 'DANGEROUS'];
@@ -12,6 +13,7 @@ export default function ReportBridge() {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
   const [submitting, setSubmitting] = useState(false);
+  const [scanning, setScanning] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState(null);
   const [bridges, setBridges] = useState([]);
@@ -20,6 +22,7 @@ export default function ReportBridge() {
   const [photo, setPhoto] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
   const [dragOver, setDragOver] = useState(false);
+  const [imageVerified, setImageVerified] = useState(false);
 
   // Restore offline draft
   useEffect(() => {
@@ -47,18 +50,33 @@ export default function ReportBridge() {
 
   function handleFileSelect(file) {
     if (!file) return;
-    if (file.size > MAX_FILE_SIZE) { setError('Photo must be under 5MB.'); setPhoto(null); setPhotoPreview(null); return; }
-    if (!file.type.startsWith('image/')) { setError('Please select an image file.'); setPhoto(null); setPhotoPreview(null); return; }
-    setError(null); setPhoto(file); setPhotoPreview(URL.createObjectURL(file));
+    if (file.size > MAX_FILE_SIZE) { setError('Photo must be under 5MB.'); setPhoto(null); setPhotoPreview(null); setImageVerified(false); return; }
+    if (!file.type.startsWith('image/')) { setError('Please select an image file.'); setPhoto(null); setPhotoPreview(null); setImageVerified(false); return; }
+    setError(null); setPhoto(file); setPhotoPreview(URL.createObjectURL(file)); setImageVerified(false);
   }
 
   function handleDrop(e) { e.preventDefault(); setDragOver(false); handleFileSelect(e.dataTransfer.files?.[0]); }
-  function removePhoto() { setPhoto(null); setPhotoPreview(null); if (fileInputRef.current) fileInputRef.current.value = ''; }
+  function removePhoto() { setPhoto(null); setPhotoPreview(null); if (fileInputRef.current) fileInputRef.current.value = ''; setImageVerified(false); }
 
   async function handleSubmit(e) {
     e.preventDefault();
     if (!form.bridge_id) return setError('Please select a bridge.');
     if (!photo) return setError('Photo evidence is required.');
+
+    // AI Image Validation
+    setScanning(true);
+    setError(null);
+    try {
+      const validation = await validateImage(photo);
+      if (!validation.valid) {
+        setError('⚠️ ' + validation.message);
+        setScanning(false);
+        return;
+      }
+    } catch (err) {
+      console.error('Validation error:', err);
+    }
+    setScanning(false);
 
     // Offline check
     if (!navigator.onLine) {
@@ -150,7 +168,10 @@ export default function ReportBridge() {
           </div>
           
           {error && <p className="text-red" style={{ fontWeight: 600 }}>⚠️ {error}</p>}
-          <button type="submit" className="btn-danger" disabled={submitting}>{submitting ? '⏳ Submitting...' : '🚨 File Report — Make It Public Record'}</button>
+          {scanning && <p style={{ fontWeight: 600, color: '#f59e0b' }}>🔍 Verifying image authenticity...</p>}
+          <button type="submit" className="btn-danger" disabled={submitting || scanning}>
+            {submitting ? '⏳ Submitting...' : scanning ? '🔍 Scanning...' : '🚨 File Report — Make It Public Record'}
+          </button>
         </form>
       </div>
     </div>

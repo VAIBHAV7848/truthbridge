@@ -95,151 +95,98 @@ export default function AdminProfile() {
   return (
     <div className="page-container" style={{ maxWidth: 1000 }}>
       {/* ─── Profile Header ─── */}
-      <div className="glass-panel" style={{ padding: 0, marginBottom: '2rem', overflow: 'hidden' }}>
-        {/* Top gradient banner */}
-        <div style={{
-          height: 120,
-          background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 30%, #4c1d95 60%, #581c87 100%)',
-          position: 'relative',
-        }}>
-          {/* Grid pattern overlay */}
+      <div className="glass-panel" style={{ padding: '2rem', marginBottom: '2rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', flexWrap: 'wrap' }}>
           <div style={{
-            position: 'absolute', inset: 0, opacity: 0.1,
-            backgroundImage: 'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)',
-            backgroundSize: '20px 20px',
-          }} />
-        </div>
-
-        <div style={{ padding: '0 2.5rem 2rem', marginTop: -50 }}>
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: '1.5rem', flexWrap: 'wrap' }}>
-            {/* Avatar */}
-            <div style={{
-              width: 100, height: 100, borderRadius: 16,
-              background: currentRole.bg,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '2.5rem', fontWeight: 900, color: '#fff',
-              boxShadow: '0 12px 40px rgba(0,0,0,0.5)',
-              border: '4px solid var(--color-bg)', flexShrink: 0,
-            }}>
-              {authority.name?.charAt(0).toUpperCase() || 'A'}
-            </div>
-
-            <div style={{ flex: 1, paddingBottom: '0.5rem' }}>
-              <h1 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '0.25rem' }}>
-                {String(authority.name || 'Admin')}
-              </h1>
-              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
-                <span style={{
-                  padding: '0.3rem 0.9rem', borderRadius: 8, fontSize: '0.8rem', fontWeight: 700,
-                  background: currentRole.bg, color: '#fff',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-                }}>
-                  {String(currentRole.label)}
-                </span>
-                <span style={{
-                  padding: '0.3rem 0.75rem', borderRadius: 20, fontSize: '0.8rem', fontWeight: 600,
-                  background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', color: '#34d399',
-                }}>
-                  ● Active
-                </span>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', gap: '0.75rem', alignSelf: 'flex-end', paddingBottom: '0.5rem' }}>
-              <button className="btn-primary" style={{ fontSize: '0.85rem' }} onClick={() => navigate('/admin/dashboard')}>
-                📊 Dashboard
-              </button>
-              <button onClick={handleLogout} className="btn-secondary" style={{ fontSize: '0.85rem' }}>
-                Logout
-              </button>
+            width: 64, height: 64, borderRadius: 12,
+            background: currentRole.bg,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '1.5rem', fontWeight: 800, color: '#fff',
+            flexShrink: 0,
+          }}>
+            {authority.name?.charAt(0).toUpperCase() || 'A'}
+          </div>
+          <div style={{ flex: 1, minWidth: 200 }}>
+            <h1 style={{ fontSize: '1.4rem', fontWeight: 800, marginBottom: '0.25rem', color: '#fff' }}>
+              {String(authority.name || 'Admin')}
+            </h1>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+              <span style={{ padding: '0.2rem 0.6rem', borderRadius: 6, fontSize: '0.7rem', fontWeight: 700, background: currentRole.bg, color: '#fff' }}>
+                {String(currentRole.label)}
+              </span>
+              <span style={{ padding: '0.2rem 0.6rem', borderRadius: 20, fontSize: '0.7rem', fontWeight: 600, background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.25)', color: '#34d399' }}>
+                Active
+              </span>
             </div>
           </div>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <button className="btn-primary" style={{ fontSize: '0.8rem', padding: '0.5rem 1rem' }} onClick={() => navigate('/admin/dashboard')}>
+              Dashboard
+            </button>
+            <button onClick={handleLogout} className="btn-secondary" style={{ fontSize: '0.8rem', padding: '0.5rem 1rem' }}>
+              Logout
+            </button>
+          </div>
+        </div>
+        <div style={{ marginTop: '1.25rem', display: 'flex', gap: '1.5rem', flexWrap: 'wrap', alignItems: 'center', padding: '0.75rem 1rem', background: 'rgba(0,0,0,0.2)', borderRadius: 8, fontSize: '0.8rem', color: '#94a3b8' }}>
+          <span>Joined <strong style={{ color: '#e2e8f0' }}>{String(joinDate)}</strong></span>
+          <span>Last login <strong style={{ color: '#e2e8f0' }}>{String(lastLogin)}</strong></span>
+          <span>{String(user?.email || 'N/A')}</span>
+          {authority.jurisdiction && (
+            <span>Jurisdiction <strong style={{ color: '#e2e8f0' }}>{String(authority.jurisdiction)}</strong></span>
+          )}
+        </div>
+      </div>
 
-          {/* Info strip */}
-          <div style={{ marginTop: '1.5rem', display: 'flex', gap: '2rem', flexWrap: 'wrap', alignItems: 'center', padding: '1rem 1.25rem', background: 'rgba(0,0,0,0.3)', borderRadius: 10, fontSize: '0.85rem', color: '#94a3b8' }}>
-            <span>📅 Joined: <strong style={{ color: '#fff' }}>{String(joinDate)}</strong></span>
-            <span>🔑 Last Login: <strong style={{ color: '#fff' }}>{String(lastLogin)}</strong></span>
-            <span>📧 {String(user?.email || 'N/A')}</span>
-            {authority.jurisdiction && (
-              <span>📍 Jurisdiction: <strong style={{ color: '#fff' }}>{String(authority.jurisdiction)}</strong></span>
-            )}
+      {/* ─── Accountability Score ─── */}
+      <div className="glass-panel" style={{ padding: '1.5rem 2rem', marginBottom: '2rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '2rem', flexWrap: 'wrap' }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '2.5rem', fontWeight: 800, color: accountabilityLabel.color, lineHeight: 1 }}>{String(accountabilityScore)}</div>
+            <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 500 }}>/ 100</div>
+          </div>
+          <div style={{ flex: 1, minWidth: 200 }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.75rem', marginBottom: '0.35rem', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '1rem', fontWeight: 700, color: '#fff' }}>Accountability Rating</span>
+              <span style={{ padding: '0.15rem 0.6rem', borderRadius: 20, fontSize: '0.7rem', fontWeight: 700, background: `${accountabilityLabel.color}18`, border: `1px solid ${accountabilityLabel.color}40`, color: accountabilityLabel.color }}>
+                {String(accountabilityLabel.label)}
+              </span>
+            </div>
+            <p style={{ fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.5 }}>
+              Based on your response rate to citizen reports.
+              {avgResponseDays !== null && (
+                <> Average response: <strong style={{ color: avgResponseDays <= 7 ? '#34d399' : avgResponseDays <= 14 ? '#fbbf24' : '#f87171' }}>{String(avgResponseDays)} days</strong>.</>
+              )}
+            </p>
           </div>
         </div>
       </div>
 
-      {/* ─── Accountability Score (Hero Section) ─── */}
-      <div className="glass-panel" style={{ padding: '2rem', marginBottom: '2rem', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: accountabilityLabel.color }} />
-        <h2 style={{ fontSize: '1.2rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 2, marginBottom: '1rem' }}>
-          Accountability Rating
-        </h2>
-
-        {/* Circular Score Display */}
-        <div style={{ position: 'relative', width: 160, height: 160, margin: '0 auto 1rem' }}>
-          <svg width="160" height="160" viewBox="0 0 160 160">
-            <circle cx="80" cy="80" r="70" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="10" />
-            <circle
-              cx="80" cy="80" r="70" fill="none"
-              stroke={accountabilityLabel.color}
-              strokeWidth="10"
-              strokeLinecap="round"
-              strokeDasharray={`${accountabilityScore * 4.4} 440`}
-              transform="rotate(-90 80 80)"
-              style={{ transition: 'stroke-dasharray 1.5s ease', filter: `drop-shadow(0 0 8px ${accountabilityLabel.color})` }}
-            />
-          </svg>
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ fontSize: '2.5rem', fontWeight: 900, color: accountabilityLabel.color }}>{String(accountabilityScore)}</span>
-            <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 600 }}>/100</span>
-          </div>
-        </div>
-
-        <span style={{
-          display: 'inline-block', padding: '0.4rem 1.2rem', borderRadius: 20,
-          fontSize: '0.9rem', fontWeight: 700,
-          background: `${accountabilityLabel.color}22`,
-          border: `1px solid ${accountabilityLabel.color}55`,
-          color: accountabilityLabel.color,
-        }}>
-          {String(accountabilityLabel.label)}
-        </span>
-
-        {avgResponseDays !== null && (
-          <p className="text-gray" style={{ marginTop: '1rem', fontSize: '0.9rem' }}>
-            ⏱️ Average response time: <strong style={{ color: avgResponseDays <= 7 ? '#34d399' : avgResponseDays <= 14 ? '#fbbf24' : '#f87171' }}>{String(avgResponseDays)} days</strong>
-          </p>
-        )}
-      </div>
-
-      {/* ─── Report Management Stats ─── */}
+      {/* ─── Report Stats ─── */}
       <div className="grid-4" style={{ marginBottom: '2rem' }}>
-        <div className="card-dark" style={{ position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: '#3b82f6' }} />
-          <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#fff' }}>{String(totalReports)}</div>
-          <div style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1 }}>Total Reports</div>
+        <div className="card-dark">
+          <div style={{ fontSize: '2rem', fontWeight: 800, color: '#fff' }}>{String(totalReports)}</div>
+          <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1 }}>Total Reports</div>
         </div>
-        <div className="card-dark" style={{ position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: '#f59e0b' }} />
-          <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#fbbf24' }}>{String(pending + underReview)}</div>
-          <div style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1 }}>Awaiting Action</div>
+        <div className="card-dark">
+          <div style={{ fontSize: '2rem', fontWeight: 800, color: '#fbbf24' }}>{String(pending + underReview)}</div>
+          <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1 }}>Awaiting Action</div>
         </div>
-        <div className="card-dark" style={{ position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: '#10b981' }} />
-          <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#34d399' }}>{String(actioned)}</div>
-          <div style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1 }}>Resolved</div>
+        <div className="card-dark">
+          <div style={{ fontSize: '2rem', fontWeight: 800, color: '#34d399' }}>{String(actioned)}</div>
+          <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1 }}>Resolved</div>
         </div>
-        <div className="card-dark" style={{ position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: '#ef4444' }} />
-          <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#f87171' }}>{String(ignored)}</div>
-          <div style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1 }}>Ignored</div>
+        <div className="card-dark">
+          <div style={{ fontSize: '2rem', fontWeight: 800, color: '#f87171' }}>{String(ignored)}</div>
+          <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1 }}>Ignored</div>
         </div>
       </div>
 
-      {/* ─── Response Rate Bar ─── */}
+      {/* ─── Response Rate ─── */}
       <div className="glass-panel" style={{ padding: '1.5rem', marginBottom: '2rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-          <span style={{ fontWeight: 700 }}>📊 Overall Response Rate</span>
-          <span style={{ fontWeight: 700, color: responseRate >= 70 ? '#34d399' : responseRate >= 40 ? '#fbbf24' : '#f87171' }}>{String(responseRate)}%</span>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+          <span style={{ fontWeight: 600, fontSize: '0.9rem', color: '#cbd5e1' }}>Overall Response Rate</span>
+          <span style={{ fontWeight: 700, fontSize: '0.9rem', color: responseRate >= 70 ? '#34d399' : responseRate >= 40 ? '#fbbf24' : '#f87171' }}>{String(responseRate)}%</span>
         </div>
         <div className="progress-container">
           <div className="progress-bar" style={{
@@ -255,46 +202,46 @@ export default function AdminProfile() {
       </div>
 
       {/* ─── Jurisdiction Overview ─── */}
-      <div style={{ textAlign: 'left' }}>
-        <div className="section-title">🌉 Bridge Jurisdiction Overview</div>
+      <div>
+        <div className="section-title">Bridge Jurisdiction Overview</div>
         <div className="grid-3" style={{ marginBottom: '2rem' }}>
-          <div className="card-red" style={{ color: '#fff' }}>
-            <div style={{ fontSize: '2.5rem', fontWeight: 900 }}>{String(criticalBridges)}</div>
-            <div style={{ fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1 }}>Critical</div>
+          <div className="card-dark">
+            <div style={{ fontSize: '2rem', fontWeight: 800, color: '#ef4444' }}>{String(criticalBridges)}</div>
+            <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1 }}>Critical</div>
           </div>
-          <div className="card-orange" style={{ color: '#fff' }}>
-            <div style={{ fontSize: '2.5rem', fontWeight: 900 }}>{String(warningBridges)}</div>
-            <div style={{ fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1 }}>Warning</div>
+          <div className="card-dark">
+            <div style={{ fontSize: '2rem', fontWeight: 800, color: '#f97316' }}>{String(warningBridges)}</div>
+            <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1 }}>Warning</div>
           </div>
-          <div className="card-dark" style={{ borderLeft: '3px solid #10b981' }}>
-            <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#34d399' }}>{String(safeBridges)}</div>
-            <div style={{ fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, color: '#94a3b8' }}>Safe</div>
+          <div className="card-dark">
+            <div style={{ fontSize: '2rem', fontWeight: 800, color: '#34d399' }}>{String(safeBridges)}</div>
+            <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1 }}>Safe</div>
           </div>
         </div>
 
         {/* Top Risk Bridges */}
-        <div className="section-title">⚠️ Highest Risk Bridges</div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        <div className="section-title">Highest Risk Bridges</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
           {bridges.slice(0, 5).map((b, i) => {
             const riskColor = b.status === 'CRITICAL' ? '#ef4444' : b.status === 'WARNING' ? '#f97316' : b.status === 'MONITOR' ? '#f59e0b' : '#10b981';
             return (
               <Link key={b.id} to={`/bridge/${b.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                <div className="report-card" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <div className="report-card" style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem 1.25rem' }}>
                   <div style={{
-                    width: 40, height: 40, borderRadius: 10,
-                    background: `${riskColor}22`, border: `1px solid ${riskColor}44`,
+                    width: 36, height: 36, borderRadius: 8,
+                    background: `${riskColor}18`, border: `1px solid ${riskColor}35`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '1rem', fontWeight: 900, color: riskColor, flexShrink: 0,
+                    fontSize: '0.85rem', fontWeight: 700, color: riskColor, flexShrink: 0,
                   }}>
                     #{String(i + 1)}
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <strong>{String(b.name || 'Unknown')}</strong>
-                    <p className="text-gray" style={{ fontSize: '0.8rem' }}>{String(b.district || '')}</p>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 600, fontSize: '0.95rem', color: '#e2e8f0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{String(b.name || 'Unknown')}</div>
+                    <div className="text-gray" style={{ fontSize: '0.8rem' }}>{String(b.district || '')}</div>
                   </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <span style={{ fontSize: '1.5rem', fontWeight: 900, color: riskColor }}>{String(b.risk_score)}</span>
-                    <p style={{ fontSize: '0.7rem', fontWeight: 600, color: riskColor, textTransform: 'uppercase' }}>{String(b.status)}</p>
+                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                    <div style={{ fontSize: '1.25rem', fontWeight: 800, color: riskColor }}>{String(b.risk_score)}</div>
+                    <div style={{ fontSize: '0.65rem', fontWeight: 600, color: riskColor, textTransform: 'uppercase', letterSpacing: 0.5 }}>{String(b.status)}</div>
                   </div>
                 </div>
               </Link>

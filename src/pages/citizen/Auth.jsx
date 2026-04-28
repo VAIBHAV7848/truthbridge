@@ -116,6 +116,7 @@ export default function CitizenAuth() {
             <label style={{ display: 'block', fontWeight: 600, fontSize: '0.9rem', marginBottom: '0.5rem' }}>EMAIL</label>
             <input
               type="email"
+              autoComplete="email"
               className="form-input"
               value={email}
               onChange={e => setEmail(e.target.value)}
@@ -128,6 +129,7 @@ export default function CitizenAuth() {
             <label style={{ display: 'block', fontWeight: 600, fontSize: '0.9rem', marginBottom: '0.5rem' }}>PASSWORD</label>
             <input
               type="password"
+              autoComplete="current-password"
               className="form-input"
               value={password}
               onChange={e => setPassword(e.target.value)}
@@ -141,6 +143,7 @@ export default function CitizenAuth() {
               <label style={{ display: 'block', fontWeight: 600, fontSize: '0.9rem', marginBottom: '0.5rem' }}>CONFIRM PASSWORD</label>
               <input
                 type="password"
+                autoComplete="new-password"
                 className="form-input"
                 value={confirmPassword}
                 onChange={e => setConfirmPassword(e.target.value)}

@@ -38,7 +38,7 @@ function App() {
         
         <Routes>
           {/* Public routes */}
-          <Route path="/" element={<Portal />} />
+          <Route path="/" element={<CitizenAuth />} />
           <Route path="/map" element={<Home />} />
           <Route path="/bridge/:id" element={<BridgeDetail />} />
           <Route path="/report" element={<ReportBridge />} />

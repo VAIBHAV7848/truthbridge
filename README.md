@@ -4,149 +4,131 @@
 
 > *"The Gambhira Bridge locals warned about cracks for months. The government recorded zero collapses that year. We built the system that makes both lies impossible."*
 
-Built at **Civilithon 2026**, KLE Technological University, Hubballi.
+**TruthBridge** is a civic-tech platform designed to expose the gap between government infrastructure claims and ground reality. It empowers citizens to anonymously report damaged bridges, calculates live risk scores using established civil engineering guidelines, and publicly ranks government authorities on how fast they respond to danger.
+
+Built for **Civilithon 2026** at KLE Technological University, Hubballi, Karnataka.
+
+🌍 **Live Demo:** [https://truthbridge-six.vercel.app](https://truthbridge-six.vercel.app)
 
 ---
 
-## Architecture
+## 🎯 The Problem
 
-TruthBridge uses a **Supabase-first** architecture — no Express server needed.
+In India, infrastructure failure is a silent crisis. 
+- The government officially acknowledged only **42 bridge collapses** between 2019–2024.
+- Independent media analysis verified over **170 collapses** in the same timeframe, resulting in hundreds of deaths.
+- **The Gap:** Rural bridge collapses are frequently omitted from federal databases or classified under vague categories like "structural wear".
 
-| Layer | Technology |
-|-------|-----------|
-| **Frontend** | React 18 + Vite |
-| **Backend** | Supabase (Postgres + Auth + Storage + Edge Functions) |
-| **Maps** | Leaflet.js / React-Leaflet |
-| **Charts** | Recharts |
-| **Weather** | OpenWeatherMap API |
-| **Hosting** | Vercel (frontend) + Supabase (backend) |
+## 💡 Our Solution
+
+TruthBridge shifts the power to the public. It relies on crowdsourced photographic evidence and automated risk algorithms to create an undeniable, public record of infrastructure decay. If authorities ignore a report for 30 days, it is permanently marked as **IGNORED** for everyone to see.
 
 ---
 
-## Quick Start
+## ✨ Core Features
 
-### 1. Set up Supabase
+### 📡 1. Live Citizen Reporting (with Offline Support)
+Citizens can report bridge damage (cracks, scour, foundation sinking) directly from their phones.
+- **Anonymous:** No login required.
+- **Evidence-Based:** Enforces mandatory photo uploads (up to 5MB).
+- **Offline Mode:** If a user is deep in rural India with no signal, the Progressive Web App (PWA) Service Worker saves the report as a draft and uploads it automatically when the network returns.
 
-1. Create a free project at [supabase.com](https://supabase.com)
-2. Go to **SQL Editor** and run these migrations in order:
-   - `supabase/migrations/00001_initial_schema.sql`
-   - `supabase/migrations/00002_storage_buckets.sql`
-   - `supabase/migrations/00003_seed_data.sql`
-3. Create an admin user in **Authentication → Users** → Add User
-4. Link the auth user to authorities table by updating `auth_user_id`
+### 🗺️ 2. Real-time Interactive Map & Heatmap
+- Visualizes all bridges with color-coded risk markers.
+- Features a **Density Heatmap Overlay** to instantly spot regions with severe infrastructure decay.
+- **Live Weather Integration:** Alerts users if heavy monsoon rainfall (>100mm/day) is hitting a highly vulnerable bridge.
 
-### 2. Configure Environment
+### 🧮 3. IRC:81-1997 Risk Scoring Engine
+We don't guess risk. We calculate it using the Indian Roads Congress guidelines.
+Bridges are scored from 0–100 based on:
+1. **Age Factor** (25%)
+2. **Citizen Reports** (25%)
+3. **Inspection Gap** (20%)
+4. **Monsoon/Hydrological Risk** (20%)
+5. **Seismic Zone** (10%)
 
+### ⏱️ 4. The "Truth Counter" & Accountability Scores
+- **Government vs. Reality:** A dramatic, animated dashboard showing the exact gap between official claims and ground reality.
+- **Accountability Score:** Authorities are graded (0-100) based on their response rate to citizen reports. If an authority constantly ignores reports, their profile is marked as "Negligent" on the public dashboard.
+
+### 🔒 5. Authority Dashboard
+- Administrators (PWD Engineers, State Authorities) can log in to view a prioritized queue of "Critical" bridges.
+- Admins can change report statuses (e.g., from `PENDING` to `ACTION_TAKEN`) and upload proof-of-repair photos.
+- Built-in data analytics (Recharts) show the distribution of bridge risk across different districts.
+
+---
+
+## 🛠️ Technology Stack
+
+TruthBridge uses a modern **Supabase-first** architecture. We eliminated the need for a traditional backend (Node/Express) by leveraging PostgreSQL Row Level Security (RLS) and Edge Functions.
+
+- **Frontend:** React 19 + Vite + React-Router-Dom
+- **Styling:** Vanilla CSS Variables (Glassmorphism & Dark Mode) — *No Tailwind/Bootstrap used.*
+- **Backend & Auth:** Supabase (PostgreSQL, GoTrue Auth)
+- **Realtime:** Supabase WebSockets (for live report feeds)
+- **Database Migrations:** Pure SQL
+- **Mapping:** React-Leaflet + OpenStreetMap + Leaflet.heat
+- **Data Visualization:** Recharts
+- **Forms & Validation:** React-Hook-Form + Zod
+- **Hosting:** Vercel
+
+---
+
+## 🚀 How to Run Locally
+
+Want to spin up TruthBridge on your own machine? It takes less than 2 minutes.
+
+### 1. Clone & Install
 ```bash
-cp .env.example .env
-# Fill in your Supabase URL and anon key
+git clone https://github.com/VAIBHAV7848/truthbridge.git
+cd truthbridge
+npm install
 ```
 
-### 3. Install & Run
+### 2. Configure Environment Variables
+Create a `.env` file in the root folder. You don't need to create your own database for local testing, you can safely connect to the hosted backend:
 
+```env
+VITE_SUPABASE_URL=https://truthbridge-six.vercel.app/api/supabase
+VITE_SUPABASE_ANON_KEY=sb_publishable_D48FvPXjvI6FmnnElSBOqw_Vue35aiM
+```
+
+### 3. Start the App
 ```bash
-npm install
 npm run dev
 ```
-
-Open http://localhost:5173
+Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ---
 
-## Project Structure
+## 🔐 Admin Demo Credentials
 
-```
-truthbridge/
-├── src/
-│   ├── lib/                    # Supabase client + data services
-│   │   ├── supabase.js         # Supabase client init
-│   │   ├── auth.js             # Auth service (admin login/logout)
-│   │   ├── bridges.js          # Bridge CRUD
-│   │   ├── reports.js          # Citizen report submission
-│   │   ├── inspections.js      # Inspection logging
-│   │   ├── alerts.js           # Alert management
-│   │   ├── truthCounter.js     # Truth counter data
-│   │   ├── riskCalculator.js   # IRC:81-1997 risk score engine
-│   │   └── weather.js          # OpenWeatherMap integration
-│   ├── context/
-│   │   └── AuthContext.jsx     # Auth state provider
-│   ├── hooks/
-│   │   ├── useBridges.js       # Bridge data hooks
-│   │   └── useWeather.js       # Weather data hook
-│   ├── pages/
-│   │   ├── Home.jsx            # Public map page
-│   │   ├── BridgeDetail.jsx    # Single bridge detail
-│   │   ├── ReportBridge.jsx    # Citizen report form
-│   │   ├── TruthDashboard.jsx  # Truth counter page
-│   │   └── admin/
-│   │       ├── Login.jsx       # Admin login
-│   │       └── Dashboard.jsx   # Admin dashboard
-│   ├── App.jsx                 # Router + app shell
-│   ├── App.css                 # Design tokens + base styles
-│   └── main.jsx                # Entry point
-├── supabase/
-│   ├── migrations/
-│   │   ├── 00001_initial_schema.sql    # Tables, enums, indexes, RLS
-│   │   ├── 00002_storage_buckets.sql   # Storage buckets + policies
-│   │   └── 00003_seed_data.sql         # 5 demo bridges + reports
-│   └── functions/
-│       ├── recalculate-risk/index.ts   # Risk score recalculation
-│       └── auto-escalate/index.ts      # 30-day auto-escalation
-├── .env.example
-├── .gitignore
-└── package.json
+To test the Authority Dashboard, click on "Live Map" -> wait for it to load, or navigate directly to `/admin/login`.
+
+**Email:** `demo@truthbridge.app`  
+**Password:** `TruthBridge@2026`  
+
+*(Note: Please do not delete core demo bridges so others can view the platform).*
+
+---
+
+## 📂 Project Structure Snapshot
+
+```text
+src/
+├── components/       # Reusable UI components (ProtectedRoute)
+├── context/          # Global state (AuthContext)
+├── hooks/            # Custom React hooks (useBridges)
+├── lib/              # Core logic (Supabase client, Risk Calculator, Weather API)
+└── pages/            # Main application routes
+    ├── Home.jsx            # The Map & Heatmap
+    ├── TruthDashboard.jsx  # Government vs Reality stats
+    ├── ReportFeed.jsx      # Realtime public feed
+    ├── ReportBridge.jsx    # Offline-capable reporting form
+    ├── BridgeDetail.jsx    # Risk breakdown & WhatsApp sharing
+    └── admin/              # Authority zone (Dashboard & Analytics)
 ```
 
 ---
 
-## Database Schema
-
-| Table | Description |
-|-------|-------------|
-| `bridges` | Bridge inventory with location, structural details, risk scores |
-| `reports` | Citizen-submitted damage reports with photos |
-| `authorities` | Admin users linked to Supabase Auth |
-| `inspections` | Inspection logs with PDF uploads |
-| `alerts` | System-generated alerts for authorities |
-| `truth_counter` | Government vs. reality data (single row) |
-
----
-
-## Risk Score Formula (IRC:81-1997)
-
-```
-Score = Age Factor (0–25)
-      + Citizen Reports (0–25)
-      + Inspection Gap (0–20)
-      + Monsoon Risk (0–20)
-      + Seismic Zone (0–10)
-
-0–30  = 🟢 SAFE
-31–60 = 🟡 MONITOR
-61–80 = 🟠 WARNING
-81–100 = 🔴 CRITICAL
-```
-
----
-
-## Security Model
-
-- **RLS enabled** on all tables
-- **Anon key** only in the browser — enforces public read access
-- **Service role key** only in Edge Functions (server-side)
-- **Anonymous reporting** — no citizen accounts required
-- **Admin auth** via Supabase Auth (email/password)
-- **Storage policies** — citizens upload report photos; only admins upload proofs and PDFs
-
----
-
-## Admin Credentials (Demo)
-
-# ⚠️ DEMO CREDENTIALS — Replace before any real deployment
-Create via Supabase Dashboard → Authentication → Add User:
-```
-Email: demo@truthbridge.app
-Password: TruthBridge@2026
-```
-
-Then link the auth user to the authorities table.
+*Because infrastructure shouldn't cost lives. Built with ❤️ for Civilithon 2026.*

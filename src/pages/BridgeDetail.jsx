@@ -1,168 +1,171 @@
-import { useParams, useNavigate } from 'react-router-dom';
-import { useBridge } from '../hooks/useBridges';
+import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useBridge } from '../hooks/useBridges'
+import { useWeather } from '../hooks/useWeather'
+
+function getTimerBadge(status, createdAt) {
+  const days = Math.floor((Date.now() - new Date(createdAt).getTime()) / 86400000)
+  if (status === 'ACTION_TAKEN') return { text: '✅ Action Taken', color: '#10b981' }
+  if (status === 'UNDER_REVIEW') return { text: '🔍 Under Review', color: '#3b82f6' }
+  if (status === 'DISMISSED') return { text: 'Dismissed', color: '#94a3b8' }
+  if (days > 30) return { text: `⚠️ IGNORED — ${days} days. No action taken.`, color: '#ef4444' }
+  return { text: `⏱️ ${days} days — Awaiting authority response`, color: '#f59e0b' }
+}
+
+function RiskBar({ value, max, color }) {
+  return (
+    <div className="progress-container">
+      <div className="progress-bar" style={{width:`${(value/max)*100}%`, background:color}} />
+    </div>
+  )
+}
 
 export default function BridgeDetail() {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const { bridge, loading, error } = useBridge(id);
-
+  const { id } = useParams()
+  const navigate = useNavigate()
+  const { bridge, loading, error } = useBridge(id)
+  
   if (loading) {
     return (
       <div className="page-container">
-        <div className="skeleton" style={{ height: '200px', marginBottom: '2rem' }}></div>
-        <div className="skeleton" style={{ height: '300px' }}></div>
+        <div className="loader"><div className="spinner"></div></div>
       </div>
-    );
+    )
   }
 
   if (error || !bridge) {
     return (
       <div className="page-container">
         <div className="card-red">
-          <h2>⚠️ Bridge Not Found</h2>
-          <p>{error?.message || "This bridge doesn't exist or was removed."}</p>
-          <button className="btn-primary" onClick={() => navigate('/')} style={{ marginTop: '1rem' }}>Return to Map</button>
+          <h2 className="text-red">⚠️ Error Loading Bridge</h2>
+          <p>{error?.message || 'Bridge not found.'}</p>
         </div>
       </div>
-    );
+    )
   }
 
-  const sLower = bridge.status.toLowerCase();
-
-  // Helper for report timing
-  const getTimerUI = (report) => {
-    const days = Math.floor((Date.now() - new Date(report.created_at)) / 86400000);
-    const status = report.status;
-    
-    if ((status === 'IGNORED' || status === 'PENDING') && days > 30) {
-      return <span style={{ color: 'var(--color-critical)', fontWeight: 'bold' }}>⚠️ IGNORED — {days} days. No action taken.</span>;
-    }
-    if (status === 'PENDING' && days <= 30) {
-      return <span style={{ color: 'var(--color-warning)', fontWeight: 'bold' }}>⏱️ {days} days — Awaiting authority response</span>;
-    }
-    if (status === 'ACTION_TAKEN') {
-      return <span style={{ color: 'var(--color-safe)', fontWeight: 'bold' }}>✅ Action taken</span>;
-    }
-    if (status === 'UNDER_REVIEW') {
-      return <span style={{ color: '#3b82f6', fontWeight: 'bold' }}>🔍 Under review</span>;
-    }
-    return <span>{status}</span>;
-  };
-
-  // Helper for severity badge
-  const getSeverityBadge = (severity) => {
-    if (severity === 'DANGEROUS') return <span className="badge" style={{ background: 'var(--color-critical)', color: 'white' }}>DANGEROUS</span>;
-    if (severity === 'SERIOUS') return <span className="badge" style={{ background: 'var(--color-warning)', color: 'white' }}>SERIOUS</span>;
-    return <span className="badge" style={{ background: 'var(--color-monitor)', color: 'white' }}>VISIBLE</span>;
-  };
+  const statusColor = { CRITICAL:'#ef4444', WARNING:'#f97316', MONITOR:'#f59e0b', SAFE:'#10b981' }
+  const bannerClass = { CRITICAL:'detail-banner detail-banner-critical', WARNING:'detail-banner detail-banner-warning', MONITOR:'detail-banner detail-banner-monitor', SAFE:'detail-banner detail-banner-safe' }
+  
+  const bd = typeof bridge.risk_breakdown === 'string' ? JSON.parse(bridge.risk_breakdown || '{}') : (bridge.risk_breakdown || {})
 
   return (
     <div className="page-container">
-      {/* Top Banner */}
-      <div className={`detail-banner detail-banner-${sLower}`}>
+      <div className={bannerClass[bridge.status]}>
         <div>
-          <div className="badge" style={{ background: 'rgba(255,255,255,0.2)', marginBottom: '1rem' }}>
-            STATUS: {bridge.status}
-          </div>
-          <h1>{bridge.name}</h1>
-          <p style={{ fontSize: '1.2rem', opacity: 0.9 }}>{bridge.district}, {bridge.state}</p>
+          <h1 style={{margin:0,fontSize:'2.5rem',lineHeight:1.1}}>{bridge.name}</h1>
+          <p style={{margin:'0.5rem 0 0 0',opacity:0.9,fontSize:'1.2rem'}}>{bridge.district}, {bridge.state}</p>
+          <p style={{margin:0,opacity:0.7,fontSize:'0.9rem'}}>{bridge.address || ''}</p>
         </div>
-        <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: '3rem', fontWeight: '900', lineHeight: 1 }}>{bridge.risk_score}</div>
-          <div style={{ fontSize: '0.9rem', opacity: 0.8 }}>RISK SCORE</div>
+        <div style={{textAlign:'right'}}>
+          <div style={{fontSize:'4rem',fontWeight:900,color:statusColor[bridge.status],lineHeight:1}}>{bridge.risk_score}</div>
+          <div style={{fontSize:'0.9rem',opacity:0.8,marginBottom:'0.5rem'}}>/100 Risk Score</div>
+          <div className={`risk-badge status-${bridge.status.toLowerCase()}`}>
+            <div className="pulse-dot"></div>{bridge.status}
+          </div>
         </div>
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '2rem' }}>
-        <button className="btn-danger" style={{ width: 'auto' }} onClick={() => navigate(`/report/${bridge.id}`)}>
+      <div style={{display:'flex',justifyContent:'flex-end',marginBottom:'2rem'}}>
+        <button className="btn-danger" style={{width:'auto'}} onClick={() => navigate(`/report/${bridge.id}`)}>
           📸 Report This Bridge
         </button>
       </div>
 
-      <div className="grid-2">
-        {/* Left Column: Info & Risk */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <div className="card-dark">
-            <h2 className="section-title">Risk Breakdown (IRC Standards)</h2>
-            
-            <div style={{ marginBottom: '1rem' }}>
-              <div className="flex-between">
-                <strong>Overall Risk</strong>
-                <span>{bridge.risk_score}%</span>
-              </div>
-              <div className="progress-container">
-                <div className="progress-bar" style={{ width: `${bridge.risk_score}%`, background: `var(--color-${sLower})` }}></div>
-              </div>
-            </div>
-
-            <div style={{ fontSize: '0.9rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <div className="flex-between"><span>Age Factor</span><span>{bridge.risk_factors?.age || 0} / 25</span></div>
-              <div className="flex-between"><span>Citizen Reports</span><span>{bridge.risk_factors?.reports || 0} / 25</span></div>
-              <div className="flex-between"><span>Inspection Gap</span><span>{bridge.risk_factors?.inspection || 0} / 20</span></div>
-              <div className="flex-between"><span>Monsoon Risk</span><span>{bridge.risk_factors?.weather || 0} / 20</span></div>
-              <div className="flex-between"><span>Seismic Zone</span><span>{bridge.risk_factors?.seismic || 0} / 10</span></div>
-            </div>
+      <div className="grid-2" style={{marginBottom:'3rem'}}>
+        <div className="glass-panel" style={{padding:'2rem',textAlign:'left'}}>
+          <h2 className="section-title">Risk Score Breakdown (IRC:81-1997)</h2>
+          <div style={{marginBottom:'1.5rem'}}>
+            <div className="flex-between" style={{fontWeight:700}}><span>Overall Risk</span><span>{bridge.risk_score}%</span></div>
+            <RiskBar value={bridge.risk_score} max={100} color={statusColor[bridge.status]} />
           </div>
-
-          <div className="card-dark">
-            <h2 className="section-title">Structural Details</h2>
-            <div className="grid-2" style={{ textAlign: 'left', gap: '1rem' }}>
-              <div>
-                <div className="text-gray" style={{ fontSize: '0.8rem', textTransform: 'uppercase' }}>Year Built</div>
-                <div style={{ fontWeight: '600' }}>{bridge.year_built} ({new Date().getFullYear() - bridge.year_built} years old)</div>
-              </div>
-              <div>
-                <div className="text-gray" style={{ fontSize: '0.8rem', textTransform: 'uppercase' }}>Bridge Type</div>
-                <div style={{ fontWeight: '600' }}>{bridge.bridge_type}</div>
-              </div>
-              <div>
-                <div className="text-gray" style={{ fontSize: '0.8rem', textTransform: 'uppercase' }}>Managing Authority</div>
-                <div style={{ fontWeight: '600' }}>{bridge.managing_authority || 'Unknown'}</div>
-              </div>
-              <div>
-                <div className="text-gray" style={{ fontSize: '0.8rem', textTransform: 'uppercase' }}>Seismic Zone</div>
-                <div style={{ fontWeight: '600' }}>Zone {bridge.seismic_zone}</div>
-              </div>
-              <div>
-                <div className="text-gray" style={{ fontSize: '0.8rem', textTransform: 'uppercase' }}>Last Inspected</div>
-                <div style={{ fontWeight: '600' }}>{bridge.last_inspected_date ? new Date(bridge.last_inspected_date).toLocaleDateString() : 'No Record'}</div>
-              </div>
+          <div style={{display:'flex',flexDirection:'column',gap:'1rem'}}>
+            <div>
+              <div className="flex-between text-gray" style={{fontSize:'0.9rem'}}><span>Age Factor</span><span>{bd.age_factor||0}/25</span></div>
+              <RiskBar value={bd.age_factor||0} max={25} color={statusColor[bridge.status]} />
+            </div>
+            <div>
+              <div className="flex-between text-gray" style={{fontSize:'0.9rem'}}><span>Citizen Reports</span><span>{bd.citizen_reports||0}/25</span></div>
+              <RiskBar value={bd.citizen_reports||0} max={25} color={statusColor[bridge.status]} />
+            </div>
+            <div>
+              <div className="flex-between text-gray" style={{fontSize:'0.9rem'}}><span>Inspection Gap</span><span>{bd.inspection_gap||0}/20</span></div>
+              <RiskBar value={bd.inspection_gap||0} max={20} color={statusColor[bridge.status]} />
+            </div>
+            <div>
+              <div className="flex-between text-gray" style={{fontSize:'0.9rem'}}><span>Monsoon Risk</span><span>{bd.monsoon_risk||0}/20</span></div>
+              <RiskBar value={bd.monsoon_risk||0} max={20} color={statusColor[bridge.status]} />
+            </div>
+            <div>
+              <div className="flex-between text-gray" style={{fontSize:'0.9rem'}}><span>Seismic Zone</span><span>{bd.seismic_zone||0}/10</span></div>
+              <RiskBar value={bd.seismic_zone||0} max={10} color={statusColor[bridge.status]} />
             </div>
           </div>
         </div>
 
-        {/* Right Column: Reports */}
-        <div className="card-dark" style={{ textAlign: 'left' }}>
-          <div className="flex-between" style={{ marginBottom: '1rem', borderBottom: '1px solid var(--color-glass-border)', paddingBottom: '0.5rem' }}>
-            <h2 style={{ fontSize: '1.5rem', fontWeight: '700' }}>Citizen Reports</h2>
-            <span className="badge" style={{ background: 'var(--color-surface-hover)' }}>{bridge.reports?.length || 0} Total</span>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxHeight: '600px', overflowY: 'auto', paddingRight: '0.5rem' }}>
-            {bridge.reports && bridge.reports.length > 0 ? (
-              bridge.reports.map(report => (
-                <div key={report.id} className="report-card">
-                  <div className="flex-between" style={{ marginBottom: '0.8rem' }}>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <span className="badge" style={{ background: 'rgba(255,255,255,0.1)' }}>{report.damage_type.replace('_', ' ')}</span>
-                      {getSeverityBadge(report.severity)}
-                    </div>
-                    <span className="text-gray" style={{ fontSize: '0.8rem' }}>{new Date(report.created_at).toLocaleDateString()}</span>
-                  </div>
-                  
-                  <p style={{ marginBottom: '1rem', lineHeight: '1.5' }}>"{report.description}"</p>
-                  
-                  <div style={{ padding: '0.8rem', background: 'rgba(0,0,0,0.3)', borderRadius: '8px', fontSize: '0.9rem' }}>
-                    {getTimerUI(report)}
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p className="text-gray">No damage reports filed for this bridge yet.</p>
-            )}
+        <div className="glass-panel" style={{padding:'2rem',textAlign:'left'}}>
+          <h2 className="section-title">Bridge Details</h2>
+          <div style={{display:'flex',flexDirection:'column',gap:'1.2rem'}}>
+            <div>
+              <div className="text-gray" style={{fontSize:'0.8rem',textTransform:'uppercase'}}>Year Built</div>
+              <div style={{fontWeight:600}}>{bridge.year_built}</div>
+            </div>
+            <div className="grid-2">
+              <div>
+                <div className="text-gray" style={{fontSize:'0.8rem',textTransform:'uppercase'}}>Bridge Type</div>
+                <div style={{fontWeight:600}}>{bridge.bridge_type}</div>
+              </div>
+              <div>
+                <div className="text-gray" style={{fontSize:'0.8rem',textTransform:'uppercase'}}>Dimensions</div>
+                <div style={{fontWeight:600}}>{bridge.length_m}m x {bridge.width_m}m</div>
+              </div>
+            </div>
+            <div>
+              <div className="text-gray" style={{fontSize:'0.8rem',textTransform:'uppercase'}}>Last Inspected</div>
+              <div style={{fontWeight:600}}>{bridge.last_inspected_date ? new Date(bridge.last_inspected_date).toLocaleDateString() : 'Never on record'}</div>
+            </div>
+            <div>
+              <div className="text-gray" style={{fontSize:'0.8rem',textTransform:'uppercase'}}>Managing Authority</div>
+              <div style={{fontWeight:600}}>{bridge.managing_authority || 'Unknown'}</div>
+            </div>
+            <div>
+              <div className="text-gray" style={{fontSize:'0.8rem',textTransform:'uppercase'}}>Seismic Zone</div>
+              <div style={{fontWeight:600}}>Zone {bridge.seismic_zone}</div>
+            </div>
           </div>
         </div>
       </div>
+
+      <div style={{textAlign:'left'}}>
+        <div className="section-title">Citizen Reports ({bridge.reports?.length || 0})</div>
+        <div className="grid-2">
+          {bridge.reports?.length > 0 ? bridge.reports.map(r => {
+            const tb = getTimerBadge(r.status, r.created_at)
+            const dmgColorMap = {CRACK:'#ef4444', SCOUR:'#f97316', FOUNDATION:'#f97316', OVERLOADING:'#f59e0b', RAILING_BROKEN:'#f59e0b', SPALLING:'#f97316', OTHER:'#94a3b8'}
+            const sevColorMap = {DANGEROUS:'#ef4444', SERIOUS:'#f97316', VISIBLE:'#f59e0b'}
+            
+            return (
+              <div key={r.id} className="report-card">
+                <div className="flex-between" style={{marginBottom:'1rem'}}>
+                  <div style={{display:'flex',gap:'0.5rem'}}>
+                    <span className="badge" style={{background:dmgColorMap[r.damage_type]}}>{r.damage_type.replace('_',' ')}</span>
+                    <span className="badge" style={{background:sevColorMap[r.severity]}}>{r.severity}</span>
+                  </div>
+                  <div className="text-gray" style={{fontSize:'0.8rem'}}>{new Date(r.created_at).toLocaleDateString()}</div>
+                </div>
+                <p style={{marginBottom:'1rem',fontStyle:'italic'}}>"{r.description}"</p>
+                
+                <span className="badge" style={{background:`${tb.color}22`,color:tb.color,border:`1px solid ${tb.color}44`,display:'inline-block'}}>
+                  {tb.text}
+                </span>
+
+                {r.photo_url && <img src={r.photo_url} alt="Report" style={{width:'100%',borderRadius:8,marginTop:12,maxHeight:200,objectFit:'cover'}} />}
+              </div>
+            )
+          }) : (
+            <p className="text-gray">No reports filed for this bridge.</p>
+          )}
+        </div>
+      </div>
     </div>
-  );
+  )
 }

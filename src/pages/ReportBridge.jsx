@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { submitReport } from '../lib/reports'
 import { validateImage } from '../lib/imageValidator'
-import { useAuth } from '../context/AuthContext'
 
 const DAMAGE_TYPES = ['CRACK', 'SCOUR', 'RAILING_BROKEN', 'OVERLOADING', 'FOUNDATION', 'SPALLING', 'OTHER'];
 const SEVERITIES = ['VISIBLE', 'SERIOUS', 'DANGEROUS'];
@@ -13,7 +12,8 @@ export default function ReportBridge() {
   const { bridgeId } = useParams();
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
-  const { user, isVerified, loading: authLoading } = useAuth();
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [scanning, setScanning] = useState(false);
@@ -26,6 +26,14 @@ export default function ReportBridge() {
   const [photoPreview, setPhotoPreview] = useState(null);
   const [dragOver, setDragOver] = useState(false);
   const [imageVerified, setImageVerified] = useState(false);
+
+  // Check auth state
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+  }, []);
 
   // Restore offline draft
   useEffect(() => {
@@ -64,10 +72,10 @@ export default function ReportBridge() {
   async function handleSubmit(e) {
     e.preventDefault();
     
-    // Check if user is logged in and verified
-    if (!user || !isVerified) {
+    // Check if user is logged in
+    if (!user) {
       setShowLoginPrompt(true);
-      setError('Please login and verify your email to submit reports.');
+      setError('Please login to submit reports.');
       return;
     }
     
@@ -135,18 +143,22 @@ export default function ReportBridge() {
       <div className="glass-panel" style={{ maxWidth: '700px', margin: '0 auto', padding: '2rem', textAlign: 'left' }}>
         <h1 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '0.5rem' }}>📸 Report Bridge Damage</h1>
         
-        {showLoginPrompt && (
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '2rem' }}>
+            <div className="spinner" style={{ margin: '0 auto' }}></div>
+          </div>
+        ) : showLoginPrompt ? (
           <div style={{ background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: 12, padding: '1.5rem', marginBottom: '1.5rem' }}>
             <div style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '0.5rem' }}>🔐 Login Required</div>
             <p className="text-gray" style={{ marginBottom: '1rem' }}>
-              You must be logged in with a verified email account to submit reports. This ensures accountability.
+              You must be logged in to submit verified bridge damage reports.
             </p>
             <div style={{ display: 'flex', gap: '1rem' }}>
-              <button className="btn-primary" style={{ flex: 1 }} onClick={() => navigate('/admin/login')}>Login / Sign Up</button>
+              <a href="/citizen/login" className="btn-primary" style={{ flex: 1, textAlign: 'center', padding: '0.8rem' }}>Login / Sign Up</a>
               <button className="filter-btn" onClick={() => setShowLoginPrompt(false)}>Cancel</button>
             </div>
           </div>
-        )}
+        ) : null}
         
         <form onSubmit={handleSubmit} style={{ marginTop: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <label>

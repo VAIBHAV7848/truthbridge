@@ -12,6 +12,7 @@ import NotFound from './pages/NotFound';
 import AdminLogin from './pages/admin/Login';
 import AdminDashboard from './pages/admin/Dashboard';
 import AdminAnalytics from './pages/admin/Analytics';
+import CitizenAuth from './pages/citizen/Auth';
 import './App.css';
 
 function App() {
@@ -44,6 +45,10 @@ function App() {
           <Route path="/report/:bridgeId" element={<ReportBridge />} />
           <Route path="/truth" element={<TruthDashboard />} />
           <Route path="/feed" element={<ReportFeed />} />
+
+          {/* Citizen routes */}
+          <Route path="/citizen/login" element={<CitizenAuth />} />
+          <Route path="/citizen/signup" element={<CitizenAuth />} />
 
           {/* Admin routes — protected */}
           <Route path="/admin/login" element={<AdminLogin />} />

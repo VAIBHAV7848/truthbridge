@@ -126,7 +126,7 @@ export default function AdminProfile() {
 
             <div style={{ flex: 1, paddingBottom: '0.5rem' }}>
               <h1 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '0.25rem' }}>
-                {authority.name || 'Admin'}
+                {String(authority.name || 'Admin')}
               </h1>
               <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
                 <span style={{
@@ -134,7 +134,7 @@ export default function AdminProfile() {
                   background: currentRole.bg, color: '#fff',
                   boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
                 }}>
-                  {currentRole.label}
+                  {String(currentRole.label)}
                 </span>
                 <span style={{
                   padding: '0.3rem 0.75rem', borderRadius: 20, fontSize: '0.8rem', fontWeight: 600,
@@ -157,10 +157,12 @@ export default function AdminProfile() {
 
           {/* Info strip */}
           <div style={{ marginTop: '1.5rem', display: 'flex', gap: '2rem', flexWrap: 'wrap', padding: '1rem 1.25rem', background: 'rgba(0,0,0,0.3)', borderRadius: 10, fontSize: '0.85rem', color: '#94a3b8' }}>
-            <span>📅 Joined: <strong style={{ color: '#fff' }}>{joinDate}</strong></span>
-            <span>🔑 Last Login: <strong style={{ color: '#fff' }}>{lastLogin}</strong></span>
-            <span>📧 {user?.email || 'N/A'}</span>
-            {authority.jurisdiction && <span>📍 Jurisdiction: <strong style={{ color: '#fff' }}>{authority.jurisdiction}</strong></span>}
+            <span>📅 Joined: <strong style={{ color: '#fff' }}>{String(joinDate)}</strong></span>
+            <span>🔑 Last Login: <strong style={{ color: '#fff' }}>{String(lastLogin)}</strong></span>
+            <span>📧 {String(user?.email || 'N/A')}</span>
+            {authority.jurisdiction && (
+              <span>📍 Jurisdiction: <strong style={{ color: '#fff' }}>{String(authority.jurisdiction)}</strong></span>
+            )}
           </div>
         </div>
       </div>
@@ -187,7 +189,7 @@ export default function AdminProfile() {
             />
           </svg>
           <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ fontSize: '2.5rem', fontWeight: 900, color: accountabilityLabel.color }}>{accountabilityScore}</span>
+            <span style={{ fontSize: '2.5rem', fontWeight: 900, color: accountabilityLabel.color }}>{String(accountabilityScore)}</span>
             <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 600 }}>/100</span>
           </div>
         </div>
@@ -199,12 +201,12 @@ export default function AdminProfile() {
           border: `1px solid ${accountabilityLabel.color}55`,
           color: accountabilityLabel.color,
         }}>
-          {accountabilityLabel.label}
+          {String(accountabilityLabel.label)}
         </span>
 
         {avgResponseDays !== null && (
           <p className="text-gray" style={{ marginTop: '1rem', fontSize: '0.9rem' }}>
-            ⏱️ Average response time: <strong style={{ color: avgResponseDays <= 7 ? '#34d399' : avgResponseDays <= 14 ? '#fbbf24' : '#f87171' }}>{avgResponseDays} days</strong>
+            ⏱️ Average response time: <strong style={{ color: avgResponseDays <= 7 ? '#34d399' : avgResponseDays <= 14 ? '#fbbf24' : '#f87171' }}>{String(avgResponseDays)} days</strong>
           </p>
         )}
       </div>
@@ -213,22 +215,22 @@ export default function AdminProfile() {
       <div className="grid-4" style={{ marginBottom: '2rem' }}>
         <div className="card-dark" style={{ position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: '#3b82f6' }} />
-          <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#fff' }}>{totalReports}</div>
+          <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#fff' }}>{String(totalReports)}</div>
           <div style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1 }}>Total Reports</div>
         </div>
         <div className="card-dark" style={{ position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: '#f59e0b' }} />
-          <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#fbbf24' }}>{pending + underReview}</div>
+          <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#fbbf24' }}>{String(pending + underReview)}</div>
           <div style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1 }}>Awaiting Action</div>
         </div>
         <div className="card-dark" style={{ position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: '#10b981' }} />
-          <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#34d399' }}>{actioned}</div>
+          <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#34d399' }}>{String(actioned)}</div>
           <div style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1 }}>Resolved</div>
         </div>
         <div className="card-dark" style={{ position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: '#ef4444' }} />
-          <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#f87171' }}>{ignored}</div>
+          <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#f87171' }}>{String(ignored)}</div>
           <div style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1 }}>Ignored</div>
         </div>
       </div>
@@ -237,7 +239,7 @@ export default function AdminProfile() {
       <div className="glass-panel" style={{ padding: '1.5rem', marginBottom: '2rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
           <span style={{ fontWeight: 700 }}>📊 Overall Response Rate</span>
-          <span style={{ fontWeight: 700, color: responseRate >= 70 ? '#34d399' : responseRate >= 40 ? '#fbbf24' : '#f87171' }}>{responseRate}%</span>
+          <span style={{ fontWeight: 700, color: responseRate >= 70 ? '#34d399' : responseRate >= 40 ? '#fbbf24' : '#f87171' }}>{String(responseRate)}%</span>
         </div>
         <div className="progress-container">
           <div className="progress-bar" style={{
@@ -257,15 +259,15 @@ export default function AdminProfile() {
         <div className="section-title">🌉 Bridge Jurisdiction Overview</div>
         <div className="grid-3" style={{ marginBottom: '2rem' }}>
           <div className="card-red">
-            <div style={{ fontSize: '2.5rem', fontWeight: 900 }}>{criticalBridges}</div>
+            <div style={{ fontSize: '2.5rem', fontWeight: 900 }}>{String(criticalBridges)}</div>
             <div style={{ fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1 }}>Critical</div>
           </div>
           <div className="card-orange">
-            <div style={{ fontSize: '2.5rem', fontWeight: 900 }}>{warningBridges}</div>
+            <div style={{ fontSize: '2.5rem', fontWeight: 900 }}>{String(warningBridges)}</div>
             <div style={{ fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1 }}>Warning</div>
           </div>
           <div className="card-dark" style={{ borderLeft: '3px solid #10b981' }}>
-            <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#34d399' }}>{safeBridges}</div>
+            <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#34d399' }}>{String(safeBridges)}</div>
             <div style={{ fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, color: '#94a3b8' }}>Safe</div>
           </div>
         </div>
@@ -284,15 +286,15 @@ export default function AdminProfile() {
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: '1rem', fontWeight: 900, color: riskColor, flexShrink: 0,
                   }}>
-                    #{i + 1}
+                    #{String(i + 1)}
                   </div>
                   <div style={{ flex: 1 }}>
-                    <strong>{b.name}</strong>
-                    <p className="text-gray" style={{ fontSize: '0.8rem' }}>{b.district}</p>
+                    <strong>{String(b.name || 'Unknown')}</strong>
+                    <p className="text-gray" style={{ fontSize: '0.8rem' }}>{String(b.district || '')}</p>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <span style={{ fontSize: '1.5rem', fontWeight: 900, color: riskColor }}>{b.risk_score}</span>
-                    <p style={{ fontSize: '0.7rem', fontWeight: 600, color: riskColor, textTransform: 'uppercase' }}>{b.status}</p>
+                    <span style={{ fontSize: '1.5rem', fontWeight: 900, color: riskColor }}>{String(b.risk_score)}</span>
+                    <p style={{ fontSize: '0.7rem', fontWeight: 600, color: riskColor, textTransform: 'uppercase' }}>{String(b.status)}</p>
                   </div>
                 </div>
               </Link>

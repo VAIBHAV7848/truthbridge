@@ -124,7 +124,7 @@ function ReportRow({ report, onUpdate }) {
               <img src={report.photo_url} alt="Report" onClick={() => setLightbox(true)} style={{ width: 64, height: 64, borderRadius: 8, objectFit: 'cover', cursor: 'zoom-in', border: '2px solid var(--color-glass-border)', flexShrink: 0 }} />
             )}
             <div>
-              <strong style={{ fontSize: '1.1rem' }}>{report.bridgeName}</strong>
+              <strong style={{ fontSize: '1.1rem' }}>{String(report.bridgeName)}</strong>
               <span className="badge" style={{ background: 'rgba(255,255,255,0.1)', marginLeft: '0.5rem' }}>{report.damage_type}</span>
               <span className="badge" style={{ background: report.severity === 'DANGEROUS' ? '#ef4444' : '#f97316', marginLeft: '0.5rem' }}>{report.severity}</span>
             </div>
@@ -225,7 +225,7 @@ export default function AdminDashboard() {
       <div className="flex-between" style={{ marginBottom: '2rem', borderBottom: '1px solid var(--color-glass-border)', paddingBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
         <h1 style={{ fontSize: '2rem', fontWeight: 800 }}>🌉 Authority Dashboard</h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-          <span className="text-gray">{authority?.name} · {authority?.role}</span>
+          <span className="text-gray">{String(authority?.name || 'Admin')} · {String(authority?.role || '')}</span>
           <button className="btn-primary" onClick={() => navigate('/admin/analytics')} style={{ background: 'rgba(255,255,255,0.1)' }}>📊 Analytics</button>
           <button className="btn-primary" onClick={handleLogout}>Logout</button>
         </div>

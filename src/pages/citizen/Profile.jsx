@@ -217,9 +217,9 @@ export default function CitizenProfile() {
                     <div style={{ flex: 1 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem' }}>
                         <div>
-                          <strong style={{ fontSize: '1.05rem' }}>{bridge.name || r.bridge_name || 'Unknown Bridge'}</strong>
+                          <strong style={{ fontSize: '1.05rem' }}>{String(bridge.name || r.bridge_name || 'Unknown Bridge')}</strong>
                           <p className="text-gray" style={{ fontSize: '0.8rem', marginTop: '0.15rem' }}>
-                            {bridge.district ? `${bridge.district}, ${bridge.state}` : ''} · {date}
+                            {bridge.district && typeof bridge.district === 'string' ? `${bridge.district}, ${bridge.state || ''}` : ''} · {String(date)}
                           </p>
                         </div>
                         <span style={{
@@ -239,7 +239,7 @@ export default function CitizenProfile() {
                       {r.description && <p style={{ marginTop: '0.5rem', fontSize: '0.85rem', color: '#94a3b8', fontStyle: 'italic' }}>"{r.description}"</p>}
                       {r.response_notes && (
                         <div style={{ marginTop: '0.5rem', padding: '0.5rem 0.75rem', background: 'rgba(16,185,129,0.1)', borderRadius: 8, fontSize: '0.8rem', color: '#6ee7b7' }}>
-                          💬 Authority Response: {r.response_notes}
+                          💬 Authority Response: {String(r.response_notes)}
                         </div>
                       )}
                     </div>

@@ -142,10 +142,11 @@ Score = Age Factor (0–25)
 
 ## Admin Credentials (Demo)
 
+# ⚠️ DEMO CREDENTIALS — Replace before any real deployment
 Create via Supabase Dashboard → Authentication → Add User:
 ```
-Email: admin@hdmc.karnataka.gov.in
-Password: truthbridge2026
+Email: demo@truthbridge.app
+Password: TruthBridge@2026
 ```
 
 Then link the auth user to the authorities table.

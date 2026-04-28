@@ -4,6 +4,92 @@ import { useAuth } from '../../context/AuthContext'
 import { useBridges } from '../../hooks/useBridges'
 import { supabase } from '../../lib/supabase'
 import { signOut } from '../../lib/auth'
+import { createBridge } from '../../lib/bridges'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+
+const BridgeSchema = z.object({
+  name: z.string().min(3, 'Name must be at least 3 characters'),
+  lat: z.coerce.number().min(-90).max(90),
+  lng: z.coerce.number().min(-180).max(180),
+  district: z.string().min(2, 'District required'),
+  state: z.string().min(2).default('Karnataka'),
+  year_built: z.coerce.number().min(1800).max(new Date().getFullYear()).optional(),
+  seismic_zone: z.enum(['II', 'III', 'IV', 'V', 'VI']).optional(),
+  bridge_type: z.string().optional(),
+})
+
+function AddBridgeForm({ onSuccess, onCancel }) {
+  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm({
+    resolver: zodResolver(BridgeSchema),
+    defaultValues: { state: 'Karnataka', seismic_zone: 'III' }
+  })
+
+  const onSubmit = async (data) => {
+    try {
+      await createBridge({ ...data, status: 'SAFE', risk_score: 0 })
+      reset()
+      onSuccess()
+    } catch (err) {
+      alert(err.message)
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="glass-panel" style={{ padding: '2rem', marginBottom: '3rem', textAlign: 'left' }}>
+      <h3 style={{ marginTop: 0, marginBottom: '1.5rem', fontSize: '1.2rem' }}>➕ Add New Bridge</h3>
+      <div className="grid-2" style={{ gap: '1rem', marginBottom: '1rem' }}>
+        <div>
+          <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: '#94a3b8' }}>Bridge Name</label>
+          <input className="form-input" style={{ margin: 0 }} {...register('name')} />
+          {errors.name && <span className="text-red" style={{ fontSize: '0.8rem' }}>{errors.name.message}</span>}
+        </div>
+        <div>
+          <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: '#94a3b8' }}>Bridge Type</label>
+          <input className="form-input" style={{ margin: 0 }} {...register('bridge_type')} placeholder="e.g. Concrete, Steel" />
+        </div>
+        <div>
+          <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: '#94a3b8' }}>Latitude</label>
+          <input className="form-input" style={{ margin: 0 }} type="number" step="any" {...register('lat')} />
+          {errors.lat && <span className="text-red" style={{ fontSize: '0.8rem' }}>{errors.lat.message}</span>}
+        </div>
+        <div>
+          <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: '#94a3b8' }}>Longitude</label>
+          <input className="form-input" style={{ margin: 0 }} type="number" step="any" {...register('lng')} />
+          {errors.lng && <span className="text-red" style={{ fontSize: '0.8rem' }}>{errors.lng.message}</span>}
+        </div>
+        <div>
+          <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: '#94a3b8' }}>District</label>
+          <input className="form-input" style={{ margin: 0 }} {...register('district')} />
+          {errors.district && <span className="text-red" style={{ fontSize: '0.8rem' }}>{errors.district.message}</span>}
+        </div>
+        <div>
+          <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: '#94a3b8' }}>State</label>
+          <input className="form-input" style={{ margin: 0 }} {...register('state')} />
+        </div>
+        <div>
+          <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: '#94a3b8' }}>Year Built</label>
+          <input className="form-input" style={{ margin: 0 }} type="number" {...register('year_built')} />
+        </div>
+        <div>
+          <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: '#94a3b8' }}>Seismic Zone</label>
+          <select className="form-input" style={{ margin: 0 }} {...register('seismic_zone')}>
+            <option value="II">Zone II</option>
+            <option value="III">Zone III</option>
+            <option value="IV">Zone IV</option>
+            <option value="V">Zone V</option>
+            <option value="VI">Zone VI</option>
+          </select>
+        </div>
+      </div>
+      <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
+        <button type="submit" className="btn-primary" disabled={isSubmitting}>{isSubmitting ? 'Saving...' : 'Save Bridge'}</button>
+        <button type="button" className="btn-secondary" onClick={onCancel}>Cancel</button>
+      </div>
+    </form>
+  )
+}
 
 function ReportRow({ report, onUpdate }) {
   const [status, setStatus] = useState(report.status)
@@ -25,17 +111,8 @@ function ReportRow({ report, onUpdate }) {
 
   return (
     <>
-      {/* Lightbox Modal */}
       {lightbox && report.photo_url && (
-        <div
-          onClick={() => setLightbox(false)}
-          style={{
-            position: 'fixed', inset: 0, zIndex: 9999,
-            background: 'rgba(0,0,0,0.92)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'zoom-out'
-          }}
-        >
+        <div onClick={() => setLightbox(false)} style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.92)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'zoom-out' }}>
           <img src={report.photo_url} alt="Full view" style={{ maxWidth: '90vw', maxHeight: '90vh', borderRadius: 12, boxShadow: '0 20px 60px rgba(0,0,0,0.8)' }} />
         </div>
       )}
@@ -43,19 +120,8 @@ function ReportRow({ report, onUpdate }) {
       <div className="report-card" style={{ marginBottom: '1rem', textAlign: 'left' }}>
         <div className="flex-between" style={{ marginBottom: '0.5rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            {/* Photo Thumbnail */}
             {report.photo_url && (
-              <img
-                src={report.photo_url}
-                alt="Report"
-                onClick={() => setLightbox(true)}
-                style={{
-                  width: 64, height: 64, borderRadius: 8,
-                  objectFit: 'cover', cursor: 'zoom-in',
-                  border: '2px solid var(--color-glass-border)',
-                  flexShrink: 0
-                }}
-              />
+              <img src={report.photo_url} alt="Report" onClick={() => setLightbox(true)} style={{ width: 64, height: 64, borderRadius: 8, objectFit: 'cover', cursor: 'zoom-in', border: '2px solid var(--color-glass-border)', flexShrink: 0 }} />
             )}
             <div>
               <strong style={{ fontSize: '1.1rem' }}>{report.bridgeName}</strong>
@@ -71,17 +137,15 @@ function ReportRow({ report, onUpdate }) {
         
         {report.description && <p style={{ marginBottom: '1rem', fontStyle: 'italic', color: '#94a3b8' }}>"{report.description}"</p>}
         
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
           <select className="form-input" style={{ width: '200px', marginTop: 0 }} value={status} onChange={e => setStatus(e.target.value)}>
             <option value="PENDING">PENDING</option>
             <option value="UNDER_REVIEW">UNDER_REVIEW</option>
             <option value="ACTION_TAKEN">ACTION_TAKEN</option>
             <option value="DISMISSED">DISMISSED</option>
           </select>
-          <input className="form-input" style={{ flex: 1, marginTop: 0 }} placeholder="Action notes..." value={notes} onChange={e => setNotes(e.target.value)} />
-          <button className="btn-primary" onClick={handleSave} disabled={saving}>
-            {saving ? '...' : 'Update'}
-          </button>
+          <input className="form-input" style={{ flex: 1, minWidth: 200, marginTop: 0 }} placeholder="Action notes..." value={notes} onChange={e => setNotes(e.target.value)} />
+          <button className="btn-primary" onClick={handleSave} disabled={saving}>{saving ? '...' : 'Update'}</button>
           {updated && <span className="text-green" style={{ fontWeight: 'bold' }}>✅ Updated</span>}
         </div>
       </div>
@@ -91,10 +155,11 @@ function ReportRow({ report, onUpdate }) {
 
 export default function AdminDashboard() {
   const { authority, loading: authLoading, isAdmin } = useAuth()
-  const { bridges, loading: bridgesLoading } = useBridges()
+  const { bridges, loading: bridgesLoading, refetch: refetchBridges } = useBridges()
   const navigate = useNavigate()
   const [pendingReports, setPendingReports] = useState([])
   const [reportsLoading, setReportsLoading] = useState(true)
+  const [addBridgeOpen, setAddBridgeOpen] = useState(false)
 
   useEffect(() => {
     if (!authLoading && !isAdmin) {
@@ -114,8 +179,7 @@ export default function AdminDashboard() {
           if (error) throw error
 
           const bridgeIds = data.map(r => r.bridge_id)
-          const { data: bridgeData } = await supabase.from('bridges')
-            .select('id, name, state').in('id', bridgeIds)
+          const { data: bridgeData } = await supabase.from('bridges').select('id, name, state').in('id', bridgeIds)
           const bridgeMap = Object.fromEntries((bridgeData || []).map(b => [b.id, b]))
           
           setPendingReports(data.map(r => ({ ...r, bridgeName: bridgeMap[r.bridge_id]?.name || 'Unknown Bridge' })))
@@ -138,12 +202,10 @@ export default function AdminDashboard() {
       }).eq('id', reportId)
       if (error) throw error
       
-      // refetch to update list if changed to ACTION_TAKEN or DISMISSED
       if (newStatus === 'ACTION_TAKEN' || newStatus === 'DISMISSED') {
          setPendingReports(prev => prev.filter(r => r.id !== reportId))
       }
     } catch (err) {
-      console.error(err)
       alert(err.message)
     }
   }
@@ -154,15 +216,15 @@ export default function AdminDashboard() {
   }
 
   if (authLoading || bridgesLoading || reportsLoading) {
-    return <div className="page-container"><div className="loader"><div className="spinner"></div></div></div>
+    return <div className="page-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}><div className="loading-spinner"></div></div>
   }
   if (!isAdmin) return null
 
   return (
     <div className="page-container">
-      <div className="flex-between" style={{ marginBottom: '2rem', borderBottom: '1px solid var(--color-glass-border)', paddingBottom: '1rem' }}>
+      <div className="flex-between" style={{ marginBottom: '2rem', borderBottom: '1px solid var(--color-glass-border)', paddingBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
         <h1 style={{ fontSize: '2rem', fontWeight: 800 }}>🌉 Authority Dashboard</h1>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
           <span className="text-gray">{authority?.name} · {authority?.role}</span>
           <button className="btn-primary" onClick={() => navigate('/admin/analytics')} style={{ background: 'rgba(255,255,255,0.1)' }}>📊 Analytics</button>
           <button className="btn-primary" onClick={handleLogout}>Logout</button>
@@ -187,6 +249,14 @@ export default function AdminDashboard() {
           <div className="stat-title text-yellow">Pending Reports</div>
         </div>
       </div>
+
+      {addBridgeOpen ? (
+        <AddBridgeForm onSuccess={() => { setAddBridgeOpen(false); refetchBridges() }} onCancel={() => setAddBridgeOpen(false)} />
+      ) : (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '2rem' }}>
+          <button className="btn-secondary" onClick={() => setAddBridgeOpen(true)}>➕ Add New Bridge</button>
+        </div>
+      )}
 
       <div style={{ marginBottom: '3rem', textAlign: 'left' }}>
         <div className="section-title">Reports Requiring Action</div>

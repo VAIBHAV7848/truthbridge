@@ -52,20 +52,13 @@ Deno.serve(async () => {
     }
 
     // 2. Update days_unaddressed for all pending reports
-    const { data: pendingReports } = await supabase
-      .from('reports')
-      .select('id, created_at')
-      .in('status', ['PENDING', 'UNDER_REVIEW']);
-
-    for (const report of (pendingReports || [])) {
-      const daysOld = Math.floor((now - new Date(report.created_at)) / (24 * 60 * 60 * 1000));
-      await supabase.from('reports').update({ days_unaddressed: daysOld }).eq('id', report.id);
-    }
+    const { error: rpcError } = await supabase.rpc('bulk_update_days_unaddressed');
+    if (rpcError) throw rpcError;
 
     return new Response(JSON.stringify({
       success: true,
       escalated: (ignoredReports || []).length,
-      updated: (pendingReports || []).length,
+      updated: 'bulk',
     }), { headers: { 'Content-Type': 'application/json' } });
   } catch (err) {
     return new Response(JSON.stringify({ error: err.message }), { status: 500 });

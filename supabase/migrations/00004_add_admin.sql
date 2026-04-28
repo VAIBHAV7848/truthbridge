@@ -1,6 +1,8 @@
 -- ============================================================
 -- TruthBridge — Add Super Admin
 -- ============================================================
+-- ⚠️ DEMO SEED DATA — Remove before production deployment
+-- Replace email/password with real admin credentials in Supabase Dashboard
 
 -- Ensure the user is in the authorities table to grant Admin Dashboard access
 

@@ -29,38 +29,58 @@ export default function ReportFeed() {
   const [filter, setFilter] = useState('ALL')
   const [lightbox, setLightbox] = useState(null)
 
-  useEffect(() => {
-    async function fetchReports() {
-      try {
-        const { data, error } = await supabase
-          .from('reports')
-          .select('*')
-          .eq('is_public', true)
-          .order('created_at', { ascending: false })
-          .limit(50)
-        if (error) throw error
+  const fetchReports = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('reports')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(50)
+      if (error) throw error
 
-        // fetch bridge names
-        const bridgeIds = [...new Set((data || []).map(r => r.bridge_id))]
-        const { data: bridgeData } = await supabase
-          .from('bridges')
-          .select('id, name, district, state')
-          .in('id', bridgeIds)
-        const bridgeMap = Object.fromEntries((bridgeData || []).map(b => [b.id, b]))
+      const bridgeIds = [...new Set((data || []).map(r => r.bridge_id))]
+      const { data: bridgeData } = await supabase
+        .from('bridges')
+        .select('id, name, district, state')
+        .in('id', bridgeIds)
+      const bridgeMap = Object.fromEntries((bridgeData || []).map(b => [b.id, b]))
 
-        setReports((data || []).map(r => ({
-          ...r,
-          bridgeName: bridgeMap[r.bridge_id]?.name || 'Unknown Bridge',
-          bridgeDistrict: bridgeMap[r.bridge_id]?.district || '',
-          bridgeState: bridgeMap[r.bridge_id]?.state || ''
-        })))
-      } catch (err) {
-        console.error(err)
-      } finally {
-        setLoading(false)
-      }
+      setReports((data || []).map(r => ({
+        ...r,
+        bridgeName: bridgeMap[r.bridge_id]?.name || 'Unknown Bridge',
+        bridgeDistrict: bridgeMap[r.bridge_id]?.district || '',
+        bridgeState: bridgeMap[r.bridge_id]?.state || ''
+      })))
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoading(false)
     }
+  }
+
+  useEffect(() => {
     fetchReports()
+
+    const channel = supabase
+      .channel('public:reports')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'reports'
+      }, async (payload) => {
+        // Fetch bridge details for the new report
+        const { data: bData } = await supabase.from('bridges').select('name, district, state').eq('id', payload.new.bridge_id).single();
+        const newReport = {
+          ...payload.new,
+          bridgeName: bData?.name || 'Unknown Bridge',
+          bridgeDistrict: bData?.district || '',
+          bridgeState: bData?.state || ''
+        };
+        setReports(prev => [newReport, ...prev])
+      })
+      .subscribe()
+
+    return () => supabase.removeChannel(channel)
   }, [])
 
   const filtered = filter === 'ALL' ? reports : reports.filter(r => r.severity === filter)
@@ -70,21 +90,16 @@ export default function ReportFeed() {
   return (
     <>
       {lightbox && (
-        <div
-          onClick={() => setLightbox(null)}
-          style={{
-            position: 'fixed', inset: 0, zIndex: 9999,
-            background: 'rgba(0,0,0,0.9)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'zoom-out'
-          }}
-        >
+        <div onClick={() => setLightbox(null)} style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'zoom-out' }}>
           <img src={lightbox} alt="Full view" style={{ maxWidth: '90vw', maxHeight: '90vh', borderRadius: 12, boxShadow: '0 20px 60px rgba(0,0,0,0.8)' }} />
         </div>
       )}
 
       <div className="page-container">
-        <div className="banner-header">📡 LIVE CITIZEN REPORTS</div>
+        <div className="flex-between banner-header" style={{ marginBottom: '2rem' }}>
+          <span>📡 LIVE CITIZEN REPORTS</span>
+          <span className="badge" style={{ background: 'rgba(239,68,68,0.2)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.5)', animation: 'pulse-crit 2s infinite' }}>🔴 LIVE</span>
+        </div>
 
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '2rem' }}>
           {['ALL', 'DANGEROUS', 'SERIOUS', 'VISIBLE'].map(f => (
@@ -95,14 +110,9 @@ export default function ReportFeed() {
         </div>
 
         {loading ? (
-          <div className="loader" style={{ marginTop: '3rem' }}>
-            <div className="spinner"></div>
-            <p className="text-gray">Loading reports...</p>
-          </div>
+          <div className="loader" style={{ marginTop: '3rem' }}><div className="loading-spinner"></div><p className="text-gray">Loading reports...</p></div>
         ) : filtered.length === 0 ? (
-          <div className="card-dark" style={{ padding: '3rem', textAlign: 'center' }}>
-            <p className="text-gray" style={{ fontSize: '1.2rem' }}>No reports found.</p>
-          </div>
+          <div className="card-dark" style={{ padding: '3rem', textAlign: 'center' }}><p className="text-gray" style={{ fontSize: '1.2rem' }}>No reports found.</p></div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {filtered.map(r => {
@@ -111,46 +121,18 @@ export default function ReportFeed() {
                 <div key={r.id} className="report-card" style={{ textAlign: 'left' }}>
                   <div className="flex-between" style={{ marginBottom: '0.75rem' }}>
                     <div>
-                      <Link to={`/bridge/${r.bridge_id}`} style={{ fontWeight: 700, fontSize: '1.1rem', color: '#fff' }}>
-                        {r.bridgeName}
-                      </Link>
-                      <span className="text-gray" style={{ fontSize: '0.85rem', marginLeft: '0.5rem' }}>
-                        {r.bridgeDistrict}, {r.bridgeState}
-                      </span>
+                      <Link to={`/bridge/${r.bridge_id}`} style={{ fontWeight: 700, fontSize: '1.1rem', color: '#fff' }}>{r.bridgeName}</Link>
+                      <span className="text-gray" style={{ fontSize: '0.85rem', marginLeft: '0.5rem' }}>{r.bridgeDistrict}, {r.bridgeState}</span>
                     </div>
                     <span className="text-gray" style={{ fontSize: '0.85rem', whiteSpace: 'nowrap' }}>{timeAgo(r.created_at)}</span>
                   </div>
-
                   <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
-                    <span className="badge" style={{ background: dmgColorMap[r.damage_type] || '#94a3b8', color: '#fff' }}>
-                      {r.damage_type?.replace('_', ' ')}
-                    </span>
-                    <span className="badge" style={{ background: sevColorMap[r.severity], color: '#fff' }}>
-                      {r.severity}
-                    </span>
-                    <span className="badge" style={{ background: `${tb.color}22`, color: tb.color, border: `1px solid ${tb.color}44` }}>
-                      {tb.text}
-                    </span>
+                    <span className="badge" style={{ background: dmgColorMap[r.damage_type] || '#94a3b8', color: '#fff' }}>{r.damage_type?.replace('_', ' ')}</span>
+                    <span className="badge" style={{ background: sevColorMap[r.severity], color: '#fff' }}>{r.severity}</span>
+                    <span className="badge" style={{ background: `${tb.color}22`, color: tb.color, border: `1px solid ${tb.color}44` }}>{tb.text}</span>
                   </div>
-
-                  {r.description && (
-                    <p style={{ marginBottom: '0.75rem', fontStyle: 'italic', color: '#94a3b8', fontSize: '0.95rem' }}>
-                      "{r.description}"
-                    </p>
-                  )}
-
-                  {r.photo_url && (
-                    <img
-                      src={r.photo_url}
-                      alt="Report evidence"
-                      onClick={() => setLightbox(r.photo_url)}
-                      style={{
-                        width: '100%', maxHeight: 240, objectFit: 'cover',
-                        borderRadius: 8, cursor: 'zoom-in',
-                        border: '1px solid var(--color-glass-border)'
-                      }}
-                    />
-                  )}
+                  {r.description && <p style={{ marginBottom: '0.75rem', fontStyle: 'italic', color: '#94a3b8', fontSize: '0.95rem' }}>"{r.description}"</p>}
+                  {r.photo_url && <img src={r.photo_url} alt="Report evidence" onClick={() => setLightbox(r.photo_url)} style={{ width: '100%', maxHeight: 240, objectFit: 'cover', borderRadius: 8, cursor: 'zoom-in', border: '1px solid var(--color-glass-border)' }} />}
                 </div>
               )
             })}

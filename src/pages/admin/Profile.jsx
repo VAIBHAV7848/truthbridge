@@ -145,7 +145,7 @@ export default function AdminProfile() {
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: '0.75rem', alignSelf: 'flex-start', marginTop: '3.5rem' }}>
+            <div style={{ display: 'flex', gap: '0.75rem', alignSelf: 'flex-end', paddingBottom: '0.5rem' }}>
               <button className="btn-primary" style={{ fontSize: '0.85rem' }} onClick={() => navigate('/admin/dashboard')}>
                 📊 Dashboard
               </button>
@@ -156,7 +156,7 @@ export default function AdminProfile() {
           </div>
 
           {/* Info strip */}
-          <div style={{ marginTop: '1.5rem', display: 'flex', gap: '2rem', flexWrap: 'wrap', padding: '1rem 1.25rem', background: 'rgba(0,0,0,0.3)', borderRadius: 10, fontSize: '0.85rem', color: '#94a3b8' }}>
+          <div style={{ marginTop: '1.5rem', display: 'flex', gap: '2rem', flexWrap: 'wrap', alignItems: 'center', padding: '1rem 1.25rem', background: 'rgba(0,0,0,0.3)', borderRadius: 10, fontSize: '0.85rem', color: '#94a3b8' }}>
             <span>📅 Joined: <strong style={{ color: '#fff' }}>{String(joinDate)}</strong></span>
             <span>🔑 Last Login: <strong style={{ color: '#fff' }}>{String(lastLogin)}</strong></span>
             <span>📧 {String(user?.email || 'N/A')}</span>
@@ -258,11 +258,11 @@ export default function AdminProfile() {
       <div style={{ textAlign: 'left' }}>
         <div className="section-title">🌉 Bridge Jurisdiction Overview</div>
         <div className="grid-3" style={{ marginBottom: '2rem' }}>
-          <div className="card-red">
+          <div className="card-red" style={{ color: '#fff' }}>
             <div style={{ fontSize: '2.5rem', fontWeight: 900 }}>{String(criticalBridges)}</div>
             <div style={{ fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1 }}>Critical</div>
           </div>
-          <div className="card-orange">
+          <div className="card-orange" style={{ color: '#fff' }}>
             <div style={{ fontSize: '2.5rem', fontWeight: 900 }}>{String(warningBridges)}</div>
             <div style={{ fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1 }}>Warning</div>
           </div>

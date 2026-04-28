@@ -12,6 +12,17 @@ function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <nav className="navbar">
+          <div className="brand">
+            <span style={{ fontSize: '1.2rem' }}>🌉</span> TruthBridge
+          </div>
+          <div className="nav-links">
+            <a href="/" className="nav-item">Live Map</a>
+            <a href="/truth" className="nav-item">Truth Counter</a>
+            <a href="/report" className="btn-primary">Report Damage</a>
+          </div>
+        </nav>
+        
         <Routes>
           {/* Public routes */}
           <Route path="/" element={<Home />} />

@@ -16,7 +16,11 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+// Provide fallback strings so createClient doesn't crash the entire app bundle
+const url = supabaseUrl || 'https://placeholder.supabase.co';
+const key = supabaseAnonKey || 'placeholder-key';
+
+export const supabase = createClient(url, key, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,

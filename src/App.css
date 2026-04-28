@@ -303,5 +303,4 @@ a:hover { color: #60a5fa; }
   animation: spin 1s ease-in-out infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
-. f l e x - b e t w e e n   {   d i s p l a y :   f l e x ;   j u s t i f y - c o n t e n t :   s p a c e - b e t w e e n ;   a l i g n - i t e m s :   c e n t e r ;   }  
- 
+.flex-between { display: flex; justify-content: space-between; align-items: center; }

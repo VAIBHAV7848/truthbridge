@@ -26,7 +26,7 @@ function ReportRow({ report, onUpdate }) {
     <div className="report-card" style={{marginBottom:'1rem',textAlign:'left'}}>
       <div className="flex-between" style={{marginBottom:'0.5rem'}}>
         <div>
-          <strong style={{fontSize:'1.1rem'}}>{report.bridges?.name}</strong>
+          <strong style={{fontSize:'1.1rem'}}>{report.bridgeName}</strong>
           <span className="badge" style={{background:'rgba(255,255,255,0.1)',marginLeft:'0.5rem'}}>{report.damage_type}</span>
           <span className="badge" style={{background:report.severity==='DANGEROUS'?'#ef4444':'#f97316',marginLeft:'0.5rem'}}>{report.severity}</span>
         </div>
@@ -74,11 +74,17 @@ export default function AdminDashboard() {
         try {
           const { data, error } = await supabase
             .from('reports')
-            .select('*, bridges(name, state)')
+            .select('*')
             .in('status', ['PENDING', 'UNDER_REVIEW', 'IGNORED'])
             .order('created_at', { ascending: false })
           if (error) throw error
-          setPendingReports(data || [])
+
+          const bridgeIds = data.map(r => r.bridge_id)
+          const { data: bridgeData } = await supabase.from('bridges')
+            .select('id, name, state').in('id', bridgeIds)
+          const bridgeMap = Object.fromEntries((bridgeData||[]).map(b=>[b.id, b]))
+          
+          setPendingReports(data.map(r => ({...r, bridgeName: bridgeMap[r.bridge_id]?.name || 'Unknown Bridge'})))
         } catch (err) {
           console.error(err)
         } finally {

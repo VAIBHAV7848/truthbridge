@@ -121,11 +121,11 @@ export default function BridgeDetail() {
             </div>
             <div>
               <div className="text-gray" style={{fontSize:'0.8rem',textTransform:'uppercase'}}>Last Inspected</div>
-              <div style={{fontWeight:600}}>{bridge.last_inspected_date ? new Date(bridge.last_inspected_date).toLocaleDateString() : 'Never on record'}</div>
+              <div style={{fontWeight:600}}>{bridge.last_inspection_date ? new Date(bridge.last_inspection_date).toLocaleDateString() : 'Never on record'}</div>
             </div>
             <div>
               <div className="text-gray" style={{fontSize:'0.8rem',textTransform:'uppercase'}}>Managing Authority</div>
-              <div style={{fontWeight:600}}>{bridge.managing_authority || 'Unknown'}</div>
+              <div style={{fontWeight:600}}>{bridge.responsible_authority || 'Unknown'}</div>
             </div>
             <div>
               <div className="text-gray" style={{fontSize:'0.8rem',textTransform:'uppercase'}}>Seismic Zone</div>
@@ -152,7 +152,7 @@ export default function BridgeDetail() {
                   </div>
                   <div className="text-gray" style={{fontSize:'0.8rem'}}>{new Date(r.created_at).toLocaleDateString()}</div>
                 </div>
-                <p style={{marginBottom:'1rem',fontStyle:'italic'}}>"{r.description}"</p>
+                {r.description && <p style={{marginBottom:'1rem',fontStyle:'italic'}}>"{r.description}"</p>}
                 
                 <span className="badge" style={{background:`${tb.color}22`,color:tb.color,border:`1px solid ${tb.color}44`,display:'inline-block'}}>
                   {tb.text}

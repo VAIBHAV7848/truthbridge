@@ -28,4 +28,8 @@ export const supabase = createClient(url, key, {
   },
 });
 
+// Export for use in other modules
+export const SUPABASE_URL = url;
+export const SUPABASE_ANON_KEY = key;
+
 export default supabase;

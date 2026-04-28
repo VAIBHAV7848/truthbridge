@@ -116,7 +116,7 @@ export default function CitizenAuth() {
             <label style={{ display: 'block', fontWeight: 600, fontSize: '0.9rem', marginBottom: '0.5rem' }}>EMAIL</label>
             <input
               type="email"
-              autoComplete="email"
+              autoComplete="username"
               className="form-input"
               value={email}
               onChange={e => setEmail(e.target.value)}

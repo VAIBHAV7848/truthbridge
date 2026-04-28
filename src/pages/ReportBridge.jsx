@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { submitReport } from '../lib/reports'
 import { validateImage } from '../lib/imageValidator'
 import { useAuth } from '../context/AuthContext'
+import { useToast } from '../context/ToastContext'
 
 const DAMAGE_TYPES = ['CRACK', 'SCOUR', 'RAILING_BROKEN', 'OVERLOADING', 'FOUNDATION', 'SPALLING', 'OTHER'];
 const SEVERITIES = ['VISIBLE', 'SERIOUS', 'DANGEROUS'];
@@ -13,6 +14,7 @@ export default function ReportBridge() {
   const { bridgeId } = useParams();
   const navigate = useNavigate();
   const { user, loading: authLoading, isVerified } = useAuth();
+  const { showToast } = useToast();
   const fileInputRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -34,10 +36,10 @@ export default function ReportBridge() {
       try {
         const parsed = JSON.parse(draft);
         setForm(prev => ({ ...prev, ...parsed }));
-        setError('📋 A saved draft was restored from your last offline session.');
+        showToast('Draft restored from offline session', 'info');
       } catch (e) { /* ignore corrupt drafts */ }
     }
-  }, []);
+  }, [showToast]);
 
   useEffect(() => {
     async function fetchBridges() {
@@ -75,7 +77,7 @@ export default function ReportBridge() {
     try {
       const validation = await validateImage(photo);
       if (!validation.valid) {
-        setError('⚠️ ' + validation.message);
+        showToast(validation.message, 'warning');
         setScanning(false);
         return;
       }
@@ -87,7 +89,7 @@ export default function ReportBridge() {
     // Offline check
     if (!navigator.onLine) {
       localStorage.setItem('tb_draft_report', JSON.stringify(form));
-      setError('📡 You are offline. Your report has been saved as a draft and will submit when you reconnect.');
+      showToast('You are offline. Report saved as draft.', 'warning');
       return;
     }
 
@@ -101,6 +103,7 @@ export default function ReportBridge() {
       await submitReport(finalForm, photo);
       localStorage.setItem(localKey, '1');
       localStorage.removeItem('tb_draft_report');
+      showToast('Report submitted successfully!', 'success');
       setSuccess(true);
     } catch (err) { setError(err.message); }
     finally { setSubmitting(false); }

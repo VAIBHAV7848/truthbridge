@@ -30,6 +30,7 @@ export default function CitizenProfile() {
         const { data, error } = await supabase
           .from('reports')
           .select('*, bridges:bridge_id(name, district, state)')
+          .eq('citizen_id', user.id)
           .order('created_at', { ascending: false })
           .limit(50);
         if (error) throw error;

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { ToastProvider } from './context/ToastContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Portal from './pages/Portal';
 import Home from './pages/Home';
@@ -15,6 +16,7 @@ import AdminAnalytics from './pages/admin/Analytics';
 import AdminProfile from './pages/admin/Profile';
 import CitizenAuth from './pages/citizen/Auth';
 import CitizenProfile from './pages/citizen/Profile';
+import Leaderboard from './pages/Leaderboard';
 import NavProfileLink from './components/NavProfileLink';
 import './App.css';
 
@@ -23,6 +25,7 @@ function App() {
 
   return (
     <AuthProvider>
+      <ToastProvider>
       <BrowserRouter>
         <nav className="navbar">
           <div className="brand" onClick={() => window.location.href = '/'} style={{ cursor: 'pointer' }}>
@@ -35,6 +38,7 @@ function App() {
             <Link to="/map" className="nav-item">Live Map</Link>
             <Link to="/truth" className="nav-item">Truth Counter</Link>
             <Link to="/feed" className="nav-item">Reports Feed</Link>
+            <Link to="/leaderboard" className="nav-item">Leaderboard</Link>
             <Link to="/report" className="btn-primary">Report Damage</Link>
             <NavProfileLink />
           </div>
@@ -45,10 +49,11 @@ function App() {
           <Route path="/" element={<Portal />} />
           <Route path="/map" element={<Home />} />
           <Route path="/bridge/:id" element={<BridgeDetail />} />
-          <Route path="/report" element={<ReportBridge />} />
-          <Route path="/report/:bridgeId" element={<ReportBridge />} />
           <Route path="/truth" element={<TruthDashboard />} />
           <Route path="/feed" element={<ReportFeed />} />
+          <Route path="/leaderboard" element={<Leaderboard />} />
+          <Route path="/report" element={<ReportBridge />} />
+          <Route path="/report/:bridgeId" element={<ReportBridge />} />
 
           {/* Citizen routes */}
           <Route path="/citizen/login" element={<CitizenAuth />} />
@@ -66,6 +71,7 @@ function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
+      </ToastProvider>
     </AuthProvider>
   );
 }

@@ -1,8 +1,7 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useRef } from 'react'
+import { useNavigate, Link } from 'react-router-dom'
 import { signIn } from '../../lib/auth'
 
-let lastRequestTime = 0;
 const MIN_REQUEST_INTERVAL = 3000;
 
 export default function AdminLogin() {
@@ -11,19 +10,20 @@ export default function AdminLogin() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const navigate = useNavigate()
+  const lastRequestTime = useRef(0);
 
   async function handleLogin(e) {
     e.preventDefault()
     setError(null)
 
     const now = Date.now();
-    if (now - lastRequestTime < MIN_REQUEST_INTERVAL) {
+    if (now - lastRequestTime.current < MIN_REQUEST_INTERVAL) {
       setError('Please wait a few seconds before trying again.');
       return;
     }
 
     setLoading(true)
-    lastRequestTime = now;
+    lastRequestTime.current = now;
 
     try {
       await signIn(email, password)
@@ -150,14 +150,14 @@ export default function AdminLogin() {
           <p className="text-gray" style={{fontSize:'0.8rem'}}>
             Citizens do not need an account to report bridge damage.
           </p>
-          <a href="/report" style={{
+          <Link to="/report" style={{
             display:'inline-block',
             marginTop:'0.75rem',
             fontSize:'0.85rem',
             color:'var(--color-accent)'
           }}>
             📸 Report a bridge without logging in →
-          </a>
+          </Link>
         </div>
       </div>
     </div>

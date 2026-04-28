@@ -86,6 +86,7 @@ export async function submitReport(reportData, photo) {
       bridge_id: reportData.bridge_id,
       bridge_name: bridgeName,
       reporter_hash: reporterHash,
+      citizen_id: reportData.citizen_id || null,
       photo_url: photoUrl,
       photo_path: photoPath,
       damage_type: reportData.damage_type,

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { SkeletonList, SkeletonReportCard } from '../components/Skeleton'
 
 function timeAgo(dateStr) {
   const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000)
@@ -78,6 +79,13 @@ export default function ReportFeed() {
         };
         setReports(prev => [newReport, ...prev])
       })
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'reports'
+      }, (payload) => {
+        setReports(prev => prev.map(r => r.id === payload.new.id ? { ...r, ...payload.new } : r))
+      })
       .subscribe()
 
     return () => supabase.removeChannel(channel)
@@ -110,7 +118,7 @@ export default function ReportFeed() {
         </div>
 
         {loading ? (
-          <div className="loader" style={{ marginTop: '3rem' }}><div className="loading-spinner"></div><p className="text-gray">Loading reports...</p></div>
+          <SkeletonList count={5}><SkeletonReportCard /></SkeletonList>
         ) : filtered.length === 0 ? (
           <div className="card-dark" style={{ padding: '3rem', textAlign: 'center' }}><p className="text-gray" style={{ fontSize: '1.2rem' }}>No reports found.</p></div>
         ) : (

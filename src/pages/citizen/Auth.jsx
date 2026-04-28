@@ -4,7 +4,7 @@
  * Citizens can create accounts to submit verified reports.
  * Different from Admin portal (which is for authorities).
  */
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
@@ -34,19 +34,19 @@ export default function CitizenAuth() {
   }
 
   // Simple rate limiting - prevent multiple rapid requests
-let lastRequestTime = 0;
-const MIN_REQUEST_INTERVAL = 3000; // 3 seconds between requests
+  const lastRequestTime = useRef(0);
+  const MIN_REQUEST_INTERVAL = 3000; // 3 seconds between requests
 
-async function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     setError(null);
     setSuccess(null);
 
     // Rate limiting check
     const now = Date.now();
-    if (now - lastRequestTime < MIN_REQUEST_INTERVAL) {
-        setError('Please wait a few seconds before trying again.');
-        return;
+    if (now - lastRequestTime.current < MIN_REQUEST_INTERVAL) {
+      setError('Please wait a few seconds before trying again.');
+      return;
     }
 
     if (mode === 'signup') {
@@ -61,7 +61,7 @@ async function handleSubmit(e) {
     }
 
     setLoading(true);
-    lastRequestTime = now;
+    lastRequestTime.current = now;
     
     try {
       if (mode === 'login') {

@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, Popup, useMap, Circle } from 'react-leaflet'
 import L from 'leaflet'
 import { useBridges } from '../hooks/useBridges'
 import { getTruthCounter } from '../lib/truthCounter'
 import { getRainfall } from '../lib/weather'
+import { SkeletonText, SkeletonCard, SkeletonList, SkeletonBridgeCard } from '../components/Skeleton'
+import NearbyBridges from '../components/NearbyBridges'
 
 const createMarkerIcon = (status, score) => {
   const statusLower = status.toLowerCase();
@@ -26,9 +28,30 @@ function FlyTo({ coords }) {
 }
 
 function HeatmapLayer({ bridges, active }) {
-  // Heatmap feature disabled - leaflet-heat plugin not installed
-  // To enable: npm install leaflet-heat and import it
-  return null
+  if (!active) return null;
+  const statusColor = { CRITICAL: '#ef4444', WARNING: '#f97316', MONITOR: '#f59e0b', SAFE: '#10b981' };
+  return (
+    <>
+      {bridges.map(b => {
+        const color = statusColor[b.status] || '#94a3b8';
+        const radius = b.status === 'CRITICAL' ? 5000 : b.status === 'WARNING' ? 4000 : b.status === 'MONITOR' ? 3000 : 2000;
+        const opacity = b.status === 'CRITICAL' ? 0.35 : b.status === 'WARNING' ? 0.28 : 0.18;
+        return (
+          <Circle
+            key={`heat-${b.id}`}
+            center={[b.lat, b.lng]}
+            radius={radius}
+            pathOptions={{
+              fillColor: color,
+              fillOpacity: opacity,
+              stroke: false,
+              color: 'transparent',
+            }}
+          />
+        );
+      })}
+    </>
+  );
 }
 
 function WeatherBadge({ lat, lng }) {
@@ -82,10 +105,24 @@ export default function Home() {
   }
 
   if (loading) return (
-    <div className="page-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
-      <div style={{ textAlign: 'center' }}>
-        <div className="loading-spinner" style={{ margin: '0 auto 1rem' }} />
-        <p className="text-gray">Loading bridge network...</p>
+    <div className="home-layout" style={{ paddingTop: 'calc(var(--nav-height) + 36px)' }}>
+      <div className="sidebar">
+        <div className="sidebar-header" style={{ textAlign: 'left' }}>
+          <SkeletonText width='60%' height='1.5rem' style={{ marginBottom: '0.5rem' }} />
+          <SkeletonText width='40%' height='0.9rem' />
+          <SkeletonCard height='40px' style={{ marginTop: '1rem', borderRadius: '8px' }} />
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '1rem' }}>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <SkeletonCard key={i} height='32px' width='60px' style={{ borderRadius: '20px' }} />
+            ))}
+          </div>
+        </div>
+        <div className="bridge-list">
+          <SkeletonList count={6}><SkeletonBridgeCard /></SkeletonList>
+        </div>
+      </div>
+      <div className="map-container">
+        <SkeletonCard height='100%' style={{ borderRadius: 0 }} />
       </div>
     </div>
   )
@@ -127,6 +164,7 @@ export default function Home() {
               </button>
             </div>
           </div>
+          <NearbyBridges bridges={bridges} />
           <div className="bridge-list">
             {filtered.length > 0 ? filtered.map(b => (
               <div key={b.id} className="bridge-card" style={{ borderLeft: `3px solid ${borderColor[b.status]}`, textAlign: 'left' }} onClick={() => handleCardClick(b)}>

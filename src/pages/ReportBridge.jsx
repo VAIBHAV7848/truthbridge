@@ -12,7 +12,7 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024;
 export default function ReportBridge() {
   const { bridgeId } = useParams();
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, isVerified } = useAuth();
   const fileInputRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -65,6 +65,7 @@ export default function ReportBridge() {
     e.preventDefault();
     
     if (!user) return setError('You must be logged in to submit a report.');
+    if (!isVerified) return setError('Please verify your email before submitting reports.');
     if (!form.bridge_id) return setError('Please select a bridge.');
     if (!photo) return setError('Photo evidence is required.');
 
@@ -122,6 +123,26 @@ export default function ReportBridge() {
           </p>
           <button className="btn-primary" style={{ width: '100%', padding: '1rem', fontSize: '1.1rem' }} onClick={() => navigate('/citizen/login')}>
             Go to Citizen Login →
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isVerified) {
+    return (
+      <div className="page-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '70vh' }}>
+        <div className="glass-panel" style={{ maxWidth: 500, width: '100%', textAlign: 'center', padding: '3rem', animation: 'fadeInUp 0.5s ease' }}>
+          <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>📧</div>
+          <h2 style={{ fontSize: '1.8rem', marginBottom: '0.75rem' }}>Verify Your Email</h2>
+          <p className="text-gray" style={{ marginBottom: '1rem', lineHeight: 1.6 }}>
+            Your account is not yet verified. Please check your inbox for a confirmation email from TruthBridge and click the verification link.
+          </p>
+          <div style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: 8, padding: '1rem', marginBottom: '1.5rem', fontSize: '0.9rem', color: '#fbbf24' }}>
+            ⏳ Once verified, refresh this page to start reporting.
+          </div>
+          <button className="btn-primary" style={{ width: '100%', padding: '1rem', fontSize: '1.1rem' }} onClick={() => window.location.reload()}>
+            🔄 I've Verified — Refresh
           </button>
         </div>
       </div>

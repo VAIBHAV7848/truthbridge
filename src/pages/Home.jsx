@@ -118,7 +118,7 @@ export default function Home() {
           </div>
         </div>
         <div className="bridge-list">
-          <SkeletonList count={6}><SkeletonBridgeCard /></SkeletonList>
+          <SkeletonList count={6} renderItem={() => <SkeletonBridgeCard />} />
         </div>
       </div>
       <div className="map-container">

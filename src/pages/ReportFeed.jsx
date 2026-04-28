@@ -118,7 +118,7 @@ export default function ReportFeed() {
         </div>
 
         {loading ? (
-          <SkeletonList count={5}><SkeletonReportCard /></SkeletonList>
+          <SkeletonList count={5} renderItem={() => <SkeletonReportCard />} />
         ) : filtered.length === 0 ? (
           <div className="card-dark" style={{ padding: '3rem', textAlign: 'center' }}><p className="text-gray" style={{ fontSize: '1.2rem' }}>No reports found.</p></div>
         ) : (

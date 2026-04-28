@@ -82,11 +82,11 @@ export function SkeletonReportCard() {
   );
 }
 
-export function SkeletonList({ count = 5, children }) {
+export function SkeletonList({ count = 5, renderItem }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i}>{children || <SkeletonBridgeCard />}</div>
+        <div key={i}>{renderItem ? renderItem(i) : <SkeletonBridgeCard />}</div>
       ))}
     </div>
   );

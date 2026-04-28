@@ -2,31 +2,37 @@
  * TruthBridge — Validate Image Edge Function
  * 
  * Receives image from frontend, validates via Hive API server-side.
- * Returns AI-generated detection results.
+ * Uses API_KEY header for authentication (simpler than JWT).
  * 
  * Deploy: supabase functions deploy validate-image
- * Note: Set HIVE_API_KEY in Supabase Edge Functions secrets
+ * Note: Set HIVE_API_KEY and VALIDATE_API_KEY in Supabase secrets
  */
-
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const HIVE_API_URL = 'https://api.thehive.ai/api/v1/task/sync';
 const HIVE_API_KEY = Deno.env.get('HIVE_API_KEY');
+const VALIDATE_API_KEY = Deno.env.get('VALIDATE_API_KEY');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-api-key',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Check if API key is configured
+    // Verify API key
+    const apiKey = req.headers.get('x-api-key');
+    if (apiKey !== VALIDATE_API_KEY) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     if (!HIVE_API_KEY) {
       return new Response(
         JSON.stringify({ error: 'Hive API key not configured' }),
@@ -34,7 +40,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Parse the form data
     const formData = await req.formData();
     const image = formData.get('media');
 
@@ -45,12 +50,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Create form data for Hive API
     const hiveFormData = new FormData();
     hiveFormData.append('media', image);
     hiveFormData.append('models', JSON.stringify(['ai_generated_media']));
 
-    // Call Hive API server-side (no CORS issues)
     const response = await fetch(HIVE_API_URL, {
       method: 'POST',
       headers: {
@@ -68,7 +71,6 @@ Deno.serve(async (req) => {
     }
 
     const result = await response.json();
-    
     console.log('Hive result:', JSON.stringify(result));
 
     return new Response(JSON.stringify(result), {

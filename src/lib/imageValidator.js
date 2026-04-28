@@ -13,6 +13,7 @@
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './supabase';
 
 const EDGE_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/validate-image`;
+const VALIDATE_API_KEY = 'tb-validate-2026'; // Simple API key for validation
 const CONFIDENCE_THRESHOLD = 0.75;
 
 /**
@@ -26,31 +27,26 @@ export async function validateImage(file) {
   }
 
   try {
-    // Create form data
     const formData = new FormData();
     formData.append('media', file);
 
-    // Call Supabase Edge Function
     const response = await fetch(EDGE_FUNCTION_URL, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-        'apikey': SUPABASE_ANON_KEY,
+        'x-api-key': VALIDATE_API_KEY,
       },
       body: formData,
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Edge function error:', errorText);
-      // Fail open for demo - allow submission
+      const errorData = await response.json().catch(() => ({}));
+      console.error('Edge function error:', errorData);
       return { valid: true, message: 'Validation skipped - service temporarily unavailable' };
     }
 
     const data = await response.json();
     console.log('Validation result:', data);
 
-    // Parse Hive API response
     const result = data?.result;
 
     if (!result) {
@@ -58,8 +54,6 @@ export async function validateImage(file) {
       return { valid: true, message: 'Could not analyze image - allowing submission' };
     }
 
-    // Check if AI-generated
-    // Hive returns: is_ai_generated (boolean or string) and confidence (0-1)
     const isAIGenerated = result.is_ai_generated === true || 
                          result.is_ai_generated === 'true' ||
                          String(result.is_ai_generated).toLowerCase() === 'true';
@@ -76,7 +70,6 @@ export async function validateImage(file) {
       };
     }
 
-    // Image is clean (real/original)
     return {
       valid: true,
       message: 'Image verified as original',
@@ -87,7 +80,6 @@ export async function validateImage(file) {
 
   } catch (error) {
     console.error('Image validation error:', error);
-    // Fail open - allow submission on error (for demo purposes)
     return { valid: true, message: 'Validation check failed - allowing submission' };
   }
 }

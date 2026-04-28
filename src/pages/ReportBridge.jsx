@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { submitReport } from '../lib/reports'
 import { validateImage } from '../lib/imageValidator'
+import { useAuth } from '../context/AuthContext'
 
 const DAMAGE_TYPES = ['CRACK', 'SCOUR', 'RAILING_BROKEN', 'OVERLOADING', 'FOUNDATION', 'SPALLING', 'OTHER'];
 const SEVERITIES = ['VISIBLE', 'SERIOUS', 'DANGEROUS'];
@@ -12,6 +13,8 @@ export default function ReportBridge() {
   const { bridgeId } = useParams();
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
+  const { user, isVerified, loading: authLoading } = useAuth();
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -60,6 +63,14 @@ export default function ReportBridge() {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    
+    // Check if user is logged in and verified
+    if (!user || !isVerified) {
+      setShowLoginPrompt(true);
+      setError('Please login and verify your email to submit reports.');
+      return;
+    }
+    
     if (!form.bridge_id) return setError('Please select a bridge.');
     if (!photo) return setError('Photo evidence is required.');
 
@@ -123,7 +134,19 @@ export default function ReportBridge() {
     <div className="page-container">
       <div className="glass-panel" style={{ maxWidth: '700px', margin: '0 auto', padding: '2rem', textAlign: 'left' }}>
         <h1 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '0.5rem' }}>📸 Report Bridge Damage</h1>
-        <p className="text-gray">Anonymous report. Permanent public record. Authorities notified immediately.</p>
+        
+        {showLoginPrompt && (
+          <div style={{ background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: 12, padding: '1.5rem', marginBottom: '1.5rem' }}>
+            <div style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '0.5rem' }}>🔐 Login Required</div>
+            <p className="text-gray" style={{ marginBottom: '1rem' }}>
+              You must be logged in with a verified email account to submit reports. This ensures accountability.
+            </p>
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <button className="btn-primary" style={{ flex: 1 }} onClick={() => navigate('/admin/login')}>Login / Sign Up</button>
+              <button className="filter-btn" onClick={() => setShowLoginPrompt(false)}>Cancel</button>
+            </div>
+          </div>
+        )}
         
         <form onSubmit={handleSubmit} style={{ marginTop: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <label>

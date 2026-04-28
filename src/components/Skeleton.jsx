@@ -14,17 +14,25 @@ const baseStyle = {
 export function SkeletonText({ lines = 1, width = '100%', height = '1rem', gap = '0.5rem', style = {} }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap }}>
-      {Array.from({ length: lines }).map((_, i) => (
-        <div
-          key={i}
-          style={{
-            ...baseStyle,
-            width: typeof width === 'string' ? width : width(i),
-            height,
-            ...style,
-          }}
-        />
-      ))}
+      {Array.from({ length: lines }).map((_, i) => {
+        let w = width;
+        if (typeof width === 'function') {
+          w = width(i);
+        } else if (Array.isArray(width)) {
+          w = width[i] || '100%';
+        }
+        return (
+          <div
+            key={i}
+            style={{
+              ...baseStyle,
+              width: w,
+              height,
+              ...style,
+            }}
+          />
+        );
+      })}
     </div>
   );
 }

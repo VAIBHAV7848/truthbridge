@@ -26,22 +26,8 @@ function FlyTo({ coords }) {
 }
 
 function HeatmapLayer({ bridges, active }) {
-  const map = useMap()
-  const heatRef = useRef(null)
-  useEffect(() => {
-    if (!active || !bridges.length) {
-      if (heatRef.current) { map.removeLayer(heatRef.current); heatRef.current = null }
-      return
-    }
-    const points = bridges.map(b => [b.lat, b.lng, b.risk_score / 100])
-    if (L.heatLayer) {
-      heatRef.current = L.heatLayer(points, {
-        radius: 35, blur: 20, maxZoom: 13,
-        gradient: { 0.3: '#10b981', 0.6: '#f59e0b', 0.8: '#f97316', 1.0: '#ef4444' }
-      }).addTo(map)
-    }
-    return () => { if (heatRef.current) { map.removeLayer(heatRef.current); heatRef.current = null } }
-  }, [active, bridges, map])
+  // Heatmap feature disabled - leaflet-heat plugin not installed
+  // To enable: npm install leaflet-heat and import it
   return null
 }
 

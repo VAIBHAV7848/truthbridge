@@ -73,11 +73,14 @@ export default function CitizenAuth() {
         navigate('/report');
       } else {
         // Sign up
+        const redirectUrl = import.meta.env.PROD
+          ? 'https://truthbridge-six.vercel.app/report'
+          : `${window.location.origin}/report`;
         const { data, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/report`,
+            emailRedirectTo: redirectUrl,
           },
         });
         if (signUpError) throw signUpError;

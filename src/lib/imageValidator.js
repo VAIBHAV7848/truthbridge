@@ -2,25 +2,17 @@
  * TruthBridge — Image Validator
  * 
  * Validates images using Hive API via Supabase Edge Function.
- * Detects AI-generated content and rejects it.
- * 
- * Flow:
- * 1. Upload image to Supabase Edge Function
- * 2. Edge Function calls Hive API (server-side, no CORS)
- * 3. Returns detection result
+ * Uses direct Supabase URL to bypass Vercel JWT rewrite.
  */
 
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './supabase';
 
-const EDGE_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/validate-image`;
-const VALIDATE_API_KEY = 'tb-validate-2026'; // Simple API key for validation
+const VALIDATE_API_KEY = 'tb-validate-2026';
 const CONFIDENCE_THRESHOLD = 0.75;
 
-/**
- * Validate image via Supabase Edge Function
- * @param {File} file - The image file to validate
- * @returns {Promise<{valid: boolean, message: string, details?: object}>}
- */
+// Direct Supabase URL (bypass Vercel rewrite which adds JWT)
+const EDGE_FUNCTION_URL = `https://gacrmgjzdlknsfhsfpvb.supabase.co/functions/v1/validate-image`;
+
 export async function validateImage(file) {
   if (!file) {
     return { valid: true, message: 'No file to validate' };
@@ -33,6 +25,8 @@ export async function validateImage(file) {
     const response = await fetch(EDGE_FUNCTION_URL, {
       method: 'POST',
       headers: {
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'apikey': SUPABASE_ANON_KEY,
         'x-api-key': VALIDATE_API_KEY,
       },
       body: formData,
@@ -45,12 +39,9 @@ export async function validateImage(file) {
     }
 
     const data = await response.json();
-    console.log('Validation result:', data);
-
     const result = data?.result;
 
     if (!result) {
-      console.warn('No result from Hive API');
       return { valid: true, message: 'Could not analyze image - allowing submission' };
     }
 
@@ -62,7 +53,7 @@ export async function validateImage(file) {
     if (isAIGenerated && confidence >= CONFIDENCE_THRESHOLD) {
       return {
         valid: false,
-        message: `AI-generated images are not allowed. Detected ${result.generator || 'AI-generated'} content (${Math.round(confidence * 100)}% confidence). Please upload original photos of the bridge damage only.`,
+        message: `AI-generated images are not allowed. Detected ${result.generator || 'AI-generated'} content (${Math.round(confidence * 100)}% confidence). Please upload original photos only.`,
         details: {
           generator: result.generator || 'Unknown AI',
           confidence: Math.round(confidence * 100),
@@ -73,9 +64,6 @@ export async function validateImage(file) {
     return {
       valid: true,
       message: 'Image verified as original',
-      details: {
-        confidence: Math.round((1 - confidence) * 100) + '%',
-      }
     };
 
   } catch (error) {

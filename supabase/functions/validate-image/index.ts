@@ -1,11 +1,8 @@
 /**
  * TruthBridge — Validate Image Edge Function
  * 
- * Receives image from frontend, validates via Hive API server-side.
- * Uses API_KEY header for authentication (simpler than JWT).
- * 
- * Deploy: supabase functions deploy validate-image
- * Note: Set HIVE_API_KEY and VALIDATE_API_KEY in Supabase secrets
+ * Proxies to Hive API without JWT requirement.
+ * Uses custom x-api-key header for auth.
  */
 
 const HIVE_API_URL = 'https://api.thehive.ai/api/v1/task/sync';
@@ -14,7 +11,7 @@ const VALIDATE_API_KEY = Deno.env.get('VALIDATE_API_KEY');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-api-key',
+  'Access-Control-Allow-Headers': 'authorization, apikey, content-type, x-api-key',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
@@ -24,11 +21,11 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Verify API key
+    // Verify custom API key
     const apiKey = req.headers.get('x-api-key');
-    if (apiKey !== VALIDATE_API_KEY) {
+    if (!apiKey || apiKey !== VALIDATE_API_KEY) {
       return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
+        JSON.stringify({ error: 'Unauthorized - invalid API key' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -71,7 +68,6 @@ Deno.serve(async (req) => {
     }
 
     const result = await response.json();
-    console.log('Hive result:', JSON.stringify(result));
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

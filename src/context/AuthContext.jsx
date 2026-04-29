@@ -25,6 +25,15 @@ export function AuthProvider({ children }) {
       } else {
         setLoading(false);
       }
+    }).catch(err => {
+      // Suppress lock contention errors - these are benign when multiple tabs are open
+      if (err?.message?.includes('Lock') && err?.message?.includes('was released')) {
+        console.warn('Auth lock contention (benign):', err.message);
+        setLoading(false);
+        return;
+      }
+      console.error('Auth session error:', err);
+      setLoading(false);
     });
 
     // Listen for changes

@@ -94,6 +94,8 @@ export async function submitReport(reportData, photo) {
       description: reportData.description || null,
       lat: reportData.lat || null,
       lng: reportData.lng || null,
+      detected_age_group: reportData.detected_age_group || null,
+      age_detection_confidence: reportData.age_detection_confidence || null,
       status: 'PENDING',
       is_public: true,
     })

@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { submitReport } from '../lib/reports'
 import { validateImage } from '../lib/imageValidator'
+import { detectAge } from '../lib/ageDetector'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 
@@ -28,6 +29,7 @@ export default function ReportBridge() {
   const [photoPreview, setPhotoPreview] = useState(null);
   const [dragOver, setDragOver] = useState(false);
   const [imageVerified, setImageVerified] = useState(false);
+  const [ageDetection, setAgeDetection] = useState(null);
 
   // Restore offline draft
   useEffect(() => {
@@ -55,13 +57,19 @@ export default function ReportBridge() {
 
   function handleFileSelect(file) {
     if (!file) return;
-    if (file.size > MAX_FILE_SIZE) { setError('Photo must be under 5MB.'); setPhoto(null); setPhotoPreview(null); setImageVerified(false); return; }
-    if (!file.type.startsWith('image/')) { setError('Please select an image file.'); setPhoto(null); setPhotoPreview(null); setImageVerified(false); return; }
-    setError(null); setPhoto(file); setPhotoPreview(URL.createObjectURL(file)); setImageVerified(false);
+    if (file.size > MAX_FILE_SIZE) { setError('Photo must be under 5MB.'); setPhoto(null); setPhotoPreview(null); setImageVerified(false); setAgeDetection(null); return; }
+    if (!file.type.startsWith('image/')) { setError('Please select an image file.'); setPhoto(null); setPhotoPreview(null); setImageVerified(false); setAgeDetection(null); return; }
+    setError(null); setPhoto(file); setPhotoPreview(URL.createObjectURL(file)); setImageVerified(false); setAgeDetection(null);
+    detectAge(file).then(result => {
+      setAgeDetection(result);
+      if (result.detected) {
+        console.log('[Age Detection] Detected:', result.ageGroup, result.confidence);
+      }
+    });
   }
 
   function handleDrop(e) { e.preventDefault(); setDragOver(false); handleFileSelect(e.dataTransfer.files?.[0]); }
-  function removePhoto() { setPhoto(null); setPhotoPreview(null); if (fileInputRef.current) fileInputRef.current.value = ''; setImageVerified(false); }
+  function removePhoto() { setPhoto(null); setPhotoPreview(null); if (fileInputRef.current) fileInputRef.current.value = ''; setImageVerified(false); setAgeDetection(null); }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -99,7 +107,7 @@ export default function ReportBridge() {
     setSubmitting(true); setError(null);
     try {
       // Append user ID to the report submission so we can track the author
-      const finalForm = { ...form, citizen_id: user.id };
+      const finalForm = { ...form, citizen_id: user.id, detected_age_group: ageDetection?.detected ? ageDetection.ageGroup : null, age_detection_confidence: ageDetection?.detected ? ageDetection.confidence : null };
       await submitReport(finalForm, photo);
       localStorage.setItem(localKey, '1');
       localStorage.removeItem('tb_draft_report');
@@ -215,6 +223,11 @@ export default function ReportBridge() {
                   <button type="button" onClick={e => { e.stopPropagation(); removePhoto() }} style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.7)', color: '#fff', border: 'none', borderRadius: '50%', width: 32, height: 32, cursor: 'pointer', fontSize: '1rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
                   <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(transparent, rgba(0,0,0,0.8))', padding: '1rem', color: '#fff', fontSize: '0.85rem' }}>📎 {photo?.name} · {(photo?.size / 1024 / 1024).toFixed(1)}MB</div>
                 </div>
+                {ageDetection && (
+                  <div style={{ marginTop: '0.5rem', padding: '0.5rem 0.75rem', background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 8, fontSize: '0.85rem', color: '#6ee7b7' }}>
+                    👤 Age Detection: <strong>{ageDetection.ageGroup}</strong> ({Math.round(ageDetection.confidence * 100)}% confidence)
+                  </div>
+                )}
               ) : (
                 <><div style={{ fontSize: '3rem', marginBottom: '0.75rem', opacity: 0.6 }}>📷</div><p style={{ fontWeight: 600, fontSize: '1rem', marginBottom: '0.25rem' }}>{dragOver ? 'Drop image here' : 'Click or drag to upload photo'}</p><p className="text-gray" style={{ fontSize: '0.85rem' }}>JPG, PNG up to 5MB</p></>
               )}

@@ -218,16 +218,18 @@ export default function ReportBridge() {
             <div onClick={() => fileInputRef.current?.click()} onDragOver={e => { e.preventDefault(); setDragOver(true) }} onDragLeave={() => setDragOver(false)} onDrop={handleDrop}
               style={{ border: `2px dashed ${dragOver ? 'var(--color-accent)' : 'var(--color-glass-border)'}`, borderRadius: 12, padding: photoPreview ? '0' : '2.5rem 1.5rem', textAlign: 'center', cursor: 'pointer', background: dragOver ? 'rgba(59,130,246,0.1)' : 'rgba(0,0,0,0.3)', transition: '0.2s', position: 'relative', overflow: 'hidden' }}>
               {photoPreview ? (
-                <div style={{ position: 'relative' }}>
-                  <img src={photoPreview} alt="Preview" style={{ width: '100%', maxHeight: 280, objectFit: 'cover', borderRadius: 10, display: 'block' }} />
-                  <button type="button" onClick={e => { e.stopPropagation(); removePhoto() }} style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.7)', color: '#fff', border: 'none', borderRadius: '50%', width: 32, height: 32, cursor: 'pointer', fontSize: '1rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
-                  <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(transparent, rgba(0,0,0,0.8))', padding: '1rem', color: '#fff', fontSize: '0.85rem' }}>📎 {photo?.name} · {(photo?.size / 1024 / 1024).toFixed(1)}MB</div>
-                </div>
-                {ageDetection && (
-                  <div style={{ marginTop: '0.5rem', padding: '0.5rem 0.75rem', background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 8, fontSize: '0.85rem', color: '#6ee7b7' }}>
-                    🏗️ Bridge Age: <strong>{ageDetection.ageGroup}</strong> ({Math.round(ageDetection.confidence * 100)}% confidence)
+                <>
+                  <div style={{ position: 'relative' }}>
+                    <img src={photoPreview} alt="Preview" style={{ width: '100%', maxHeight: 280, objectFit: 'cover', borderRadius: 10, display: 'block' }} />
+                    <button type="button" onClick={e => { e.stopPropagation(); removePhoto() }} style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.7)', color: '#fff', border: 'none', borderRadius: '50%', width: 32, height: 32, cursor: 'pointer', fontSize: '1rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+                    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(transparent, rgba(0,0,0,0.8))', padding: '1rem', color: '#fff', fontSize: '0.85rem' }}>📎 {photo?.name} · {(photo?.size / 1024 / 1024).toFixed(1)}MB</div>
                   </div>
-                )}
+                  {ageDetection && (
+                    <div style={{ marginTop: '0.5rem', padding: '0.5rem 0.75rem', background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 8, fontSize: '0.85rem', color: '#6ee7b7' }}>
+                      🏗️ Bridge Age: <strong>{ageDetection.ageGroup}</strong> ({Math.round(ageDetection.confidence * 100)}% confidence)
+                    </div>
+                  )}
+                </>
               ) : (
                 <><div style={{ fontSize: '3rem', marginBottom: '0.75rem', opacity: 0.6 }}>📷</div><p style={{ fontWeight: 600, fontSize: '1rem', marginBottom: '0.25rem' }}>{dragOver ? 'Drop image here' : 'Click or drag to upload photo'}</p><p className="text-gray" style={{ fontSize: '0.85rem' }}>JPG, PNG up to 5MB</p></>
               )}

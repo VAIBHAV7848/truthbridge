@@ -11,6 +11,8 @@ import { z } from 'zod'
 import { useToast } from '../../context/ToastContext'
 import { exportToCSV, exportToPDF, getReportStats } from '../../lib/exportReports'
 import InspectionScheduler from '../../components/InspectionScheduler'
+import { getActiveEngineers } from '../../lib/engineers'
+import { createTask } from '../../lib/tasks'
 
 const BridgeSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters'),
@@ -94,12 +96,19 @@ function AddBridgeForm({ onSuccess, onCancel }) {
   )
 }
 
-function ReportRow({ report, onUpdate }) {
+function ReportRow({ report, onUpdate, authority }) {
   const [status, setStatus] = useState(report.status)
   const [notes, setNotes] = useState(report.response_notes || '')
   const [saving, setSaving] = useState(false)
   const [updated, setUpdated] = useState(false)
   const [lightbox, setLightbox] = useState(false)
+
+  // Assign to Engineer state
+  const [assignOpen, setAssignOpen] = useState(false)
+  const [engineers, setEngineers] = useState([])
+  const [assignForm, setAssignForm] = useState({ engineerId: '', priority: 'MEDIUM', dueDate: '', notes: '' })
+  const [assigning, setAssigning] = useState(false)
+  const [assigned, setAssigned] = useState(false)
 
   const days = Math.floor((Date.now() - new Date(report.created_at).getTime()) / 86400000)
   const isOverdue = days > 30
@@ -111,6 +120,13 @@ function ReportRow({ report, onUpdate }) {
     setUpdated(true)
     setTimeout(() => setUpdated(false), 2000)
   }
+
+  // Fetch engineers when assignment panel opens
+  useEffect(() => {
+    if (assignOpen && engineers.length === 0) {
+      getActiveEngineers().then(setEngineers).catch(console.error)
+    }
+  }, [assignOpen])
 
   return (
     <>
@@ -149,8 +165,91 @@ function ReportRow({ report, onUpdate }) {
           </select>
           <input className="form-input" style={{ flex: 1, minWidth: 200, marginTop: 0 }} placeholder="Action notes..." value={notes} onChange={e => setNotes(e.target.value)} />
           <button className="btn-primary" onClick={handleSave} disabled={saving}>{saving ? '...' : 'Update'}</button>
+          <button className="btn-secondary" onClick={() => setAssignOpen(!assignOpen)} style={{ background: 'rgba(34,197,94,0.1)', color: '#86efac' }}>
+            🔧 Assign to Engineer
+          </button>
           {updated && <span className="text-green" style={{ fontWeight: 'bold' }}>✅ Updated</span>}
         </div>
+
+        {/* Assignment Panel */}
+        {assignOpen && (
+          <div style={{ marginTop: '1rem', padding: '1rem', background: 'rgba(34,197,94,0.05)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 8 }}>
+            <div style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: '0.75rem', color: '#86efac' }}>
+              🔧 Assign to Engineer
+            </div>
+            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+              <select
+                className="form-input"
+                style={{ width: 200, marginTop: 0 }}
+                value={assignForm.engineerId}
+                onChange={e => setAssignForm(f => ({ ...f, engineerId: e.target.value }))}
+              >
+                <option value="">— Select Engineer —</option>
+                {engineers.map(eng => (
+                  <option key={eng.id} value={eng.id}>
+                    {eng.name}{eng.specialization ? ` (${eng.specialization})` : ''}
+                  </option>
+                ))}
+              </select>
+              <select
+                className="form-input"
+                style={{ width: 140, marginTop: 0 }}
+                value={assignForm.priority}
+                onChange={e => setAssignForm(f => ({ ...f, priority: e.target.value }))}
+              >
+                <option value="LOW">Low Priority</option>
+                <option value="MEDIUM">Medium Priority</option>
+                <option value="HIGH">High Priority</option>
+                <option value="URGENT">URGENT</option>
+              </select>
+              <input
+                type="date"
+                className="form-input"
+                style={{ width: 160, marginTop: 0 }}
+                value={assignForm.dueDate}
+                onChange={e => setAssignForm(f => ({ ...f, dueDate: e.target.value }))}
+              />
+              <input
+                className="form-input"
+                style={{ flex: 1, minWidth: 180, marginTop: 0 }}
+                placeholder="Task notes / instructions..."
+                value={assignForm.notes}
+                onChange={e => setAssignForm(f => ({ ...f, notes: e.target.value }))}
+              />
+              <button
+                className="btn-primary"
+                style={{ background: 'rgba(34,197,94,0.2)', color: '#86efac' }}
+                disabled={assigning || !assignForm.engineerId}
+                onClick={async () => {
+                  setAssigning(true);
+                  try {
+                    await createTask({
+                      bridge_id:   report.bridge_id,
+                      bridge_name: report.bridgeName,
+                      report_id:   report.id,
+                      assigned_by: authority.id,
+                      assigned_to: assignForm.engineerId,
+                      title:       `Inspect ${report.bridgeName} — ${report.damage_type}`,
+                      description: assignForm.notes,
+                      priority:    assignForm.priority,
+                      due_date:    assignForm.dueDate || null,
+                    });
+                    setAssigned(true);
+                    setAssignOpen(false);
+                  } catch (err) {
+                    alert(err.message);
+                  } finally {
+                    setAssigning(false);
+                  }
+                }}
+              >
+                {assigning ? 'Assigning...' : 'Assign'}
+              </button>
+              <button className="btn-secondary" onClick={() => setAssignOpen(false)}>Cancel</button>
+            </div>
+            {assigned && <div style={{ marginTop: '0.5rem', color: '#86efac', fontSize: '0.85rem' }}>✅ Task assigned to engineer</div>}
+          </div>
+        )}
       </div>
     </>
   )
@@ -281,7 +380,7 @@ export default function AdminDashboard() {
       <div style={{ marginBottom: '3rem', textAlign: 'left' }}>
         <div className="section-title">Reports Requiring Action</div>
         {pendingReports.length > 0 ? pendingReports.map(r => (
-          <ReportRow key={r.id} report={r} onUpdate={updateReport} />
+          <ReportRow key={r.id} report={r} onUpdate={updateReport} authority={authority} />
         )) : <p className="text-gray">No reports require action at this time.</p>}
       </div>
 

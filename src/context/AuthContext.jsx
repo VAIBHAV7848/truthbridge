@@ -1,16 +1,17 @@
 /**
  * TruthBridge — Auth Context
- * Provides auth state (user + authority profile) to the React component tree.
+ * Provides auth state (user + authority/engineer profile) to the React component tree.
  */
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { getCurrentAuthority, onAuthStateChange } from '../lib/auth';
+import { getCurrentAuthority, getCurrentEngineer, onAuthStateChange } from '../lib/auth';
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [authority, setAuthority] = useState(null);
+  const [engineer, setEngineer] = useState(null);
   const [loading, setLoading] = useState(true);
   const [emailConfirmed, setEmailConfirmed] = useState(false);
 
@@ -21,7 +22,20 @@ export function AuthProvider({ children }) {
       if (session?.user) {
         // Check if email is confirmed
         setEmailConfirmed(!!session.user.email_confirmed_at);
-        getCurrentAuthority().then(setAuthority).finally(() => setLoading(false));
+        
+        // Try to fetch authority profile first, then engineer
+        getCurrentAuthority().then((auth) => {
+          if (auth) {
+            setAuthority(auth);
+            setEngineer(null);
+          } else {
+            // Not an authority, check if engineer
+            getCurrentEngineer().then((eng) => {
+              setEngineer(eng);
+              setAuthority(null);
+            });
+          }
+        }).finally(() => setLoading(false));
       } else {
         setLoading(false);
       }
@@ -41,9 +55,20 @@ export function AuthProvider({ children }) {
       setUser(session?.user ?? null);
       if (session?.user) {
         setEmailConfirmed(!!session.user.email_confirmed_at);
-        getCurrentAuthority().then(setAuthority);
+        getCurrentAuthority().then((auth) => {
+          if (auth) {
+            setAuthority(auth);
+            setEngineer(null);
+          } else {
+            getCurrentEngineer().then((eng) => {
+              setEngineer(eng);
+              setAuthority(null);
+            });
+          }
+        });
       } else {
         setAuthority(null);
+        setEngineer(null);
         setEmailConfirmed(false);
       }
     });
@@ -55,8 +80,10 @@ export function AuthProvider({ children }) {
     <AuthContext.Provider value={{ 
       user, 
       authority, 
+      engineer,
       loading, 
       isAdmin: !!authority,
+      isEngineer: !!engineer,
       isVerified: !!user && emailConfirmed,
       isLoggedIn: !!user,
     }}>

@@ -90,3 +90,62 @@ export async function getCurrentAuthority() {
 export function onAuthStateChange(callback) {
   return supabase.auth.onAuthStateChange(callback);
 }
+
+/**
+ * Sign in an engineer user with email + password.
+ * Returns { user, session, engineer } on success.
+ */
+export async function signInEngineer(email, password) {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (error) throw error;
+
+  // Fetch the engineer profile linked to this auth user
+  const { data: engineer, error: profileError } = await supabase
+    .from('engineers')
+    .select('*')
+    .eq('auth_user_id', data.user.id)
+    .single();
+
+  if (profileError) {
+    await supabase.auth.signOut();
+    throw new Error('This account is not registered as an engineer.');
+  }
+
+  if (!engineer.is_active) {
+    await supabase.auth.signOut();
+    throw new Error('This engineer account has been deactivated.');
+  }
+
+  // Update last_login
+  await supabase
+    .from('engineers')
+    .update({ last_login: new Date().toISOString() })
+    .eq('id', engineer.id);
+
+  return {
+    user: data.user,
+    session: data.session,
+    engineer,
+  };
+}
+
+/**
+ * Get the current engineer profile (if signed in).
+ */
+export async function getCurrentEngineer() {
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError || !user) return null;
+
+  const { data: engineer, error } = await supabase
+    .from('engineers')
+    .select('*')
+    .eq('auth_user_id', user.id)
+    .single();
+
+  if (error) return null;
+  return engineer;
+}

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
-import ProtectedRoute from './components/ProtectedRoute';
+import ProtectedRoute, { EngineerRoute } from './components/ProtectedRoute';
 import Portal from './pages/Portal';
 import Home from './pages/Home';
 import BridgeDetail from './pages/BridgeDetail';
@@ -17,6 +17,8 @@ import AdminProfile from './pages/admin/Profile';
 import CitizenAuth from './pages/citizen/Auth';
 import CitizenProfile from './pages/citizen/Profile';
 import Leaderboard from './pages/Leaderboard';
+import EngineerAuth from './pages/engineer/Auth';
+import EngineerDashboard from './pages/engineer/Dashboard';
 import NavProfileLink from './components/NavProfileLink';
 import './App.css';
 
@@ -59,6 +61,10 @@ function App() {
           <Route path="/citizen/login" element={<CitizenAuth />} />
           <Route path="/citizen/signup" element={<CitizenAuth />} />
           <Route path="/citizen/profile" element={<CitizenProfile />} />
+
+          {/* Engineer routes */}
+          <Route path="/engineer/login" element={<EngineerAuth />} />
+          <Route path="/engineer/dashboard" element={<EngineerRoute><EngineerDashboard /></EngineerRoute>} />
 
           {/* Admin routes — protected */}
           <Route path="/admin/login" element={<AdminLogin />} />

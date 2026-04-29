@@ -37,7 +37,7 @@ export default function Portal() {
           Select your portal to continue.
         </p>
 
-        <div className="grid-2" style={{ gap: '2rem' }}>
+        <div className="grid-3" style={{ gap: '2rem' }}>
           
           {/* Citizen Portal */}
           <div 
@@ -97,6 +97,37 @@ export default function Portal() {
             </p>
             <button className="btn-danger" style={{ width: '100%', padding: '0.6rem 1.2rem', fontSize: '1rem' }}>
               Admin Login →
+            </button>
+          </div>
+
+          {/* Engineer Portal */}
+          <div 
+            className="card-dark" 
+            style={{ 
+              cursor: 'pointer', 
+              transition: '0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              border: '1px solid rgba(34,197,94,0.2)',
+              background: 'linear-gradient(180deg, rgba(10,40,20,0.4) 0%, rgba(0,0,0,0) 100%)'
+            }}
+            onClick={() => navigate('/engineer/login')}
+            onMouseEnter={e => {
+              e.currentTarget.style.transform = 'translateY(-5px)';
+              e.currentTarget.style.borderColor = 'rgba(34,197,94,0.5)';
+              e.currentTarget.style.boxShadow = '0 10px 30px rgba(34,197,94,0.2)';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.borderColor = 'rgba(34,197,94,0.2)';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
+          >
+            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔧</div>
+            <h2 style={{ fontSize: '1.5rem', marginBottom: '0.5rem', color: '#86efac' }}>Engineer Portal</h2>
+            <p className="text-gray" style={{ fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+              Field engineers and inspection officers. View assigned tasks and update inspection status.
+            </p>
+            <button className="btn-primary" style={{ width: '100%', background: 'rgba(34,197,94,0.2)', color: '#86efac', borderColor: 'rgba(34,197,94,0.3)' }}>
+              Engineer Login →
             </button>
           </div>
 

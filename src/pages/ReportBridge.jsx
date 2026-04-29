@@ -225,7 +225,7 @@ export default function ReportBridge() {
                 </div>
                 {ageDetection && (
                   <div style={{ marginTop: '0.5rem', padding: '0.5rem 0.75rem', background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 8, fontSize: '0.85rem', color: '#6ee7b7' }}>
-                    👤 Age Detection: <strong>{ageDetection.ageGroup}</strong> ({Math.round(ageDetection.confidence * 100)}% confidence)
+                    🏗️ Bridge Age: <strong>{ageDetection.ageGroup}</strong> ({Math.round(ageDetection.confidence * 100)}% confidence)
                   </div>
                 )}
               ) : (

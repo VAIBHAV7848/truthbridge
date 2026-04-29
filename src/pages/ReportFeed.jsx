@@ -139,7 +139,7 @@ export default function ReportFeed() {
                     <span className="badge" style={{ background: dmgColorMap[r.damage_type] || '#94a3b8', color: '#fff' }}>{r.damage_type?.replace('_', ' ')}</span>
                     <span className="badge" style={{ background: sevColorMap[r.severity], color: '#fff' }}>{r.severity}</span>
                     <span className="badge" style={{ background: `${tb.color}22`, color: tb.color, border: `1px solid ${tb.color}44` }}>{tb.text}</span>
-                    {r.detected_age_group && <span className="badge" style={{ background: 'rgba(59,130,246,0.2)', color: '#93c5fd', border: '1px solid rgba(59,130,246,0.4)' }}>👤 {r.detected_age_group}</span>}
+                    {r.detected_age_group && <span className="badge" style={{ background: 'rgba(59,130,246,0.2)', color: '#93c5fd', border: '1px solid rgba(59,130,246,0.4)' }}>🏗️ {r.detected_age_group}</span>}
                   </div>
                   {r.description && <p style={{ marginBottom: '0.75rem', fontStyle: 'italic', color: '#94a3b8', fontSize: '0.95rem' }}>"{r.description}"</p>}
                   {r.photo_url && <img src={r.photo_url} alt="Report evidence" onClick={() => setLightbox(r.photo_url)} style={{ width: '100%', maxHeight: 240, objectFit: 'cover', borderRadius: 8, cursor: 'zoom-in', border: '1px solid var(--color-glass-border)' }} />}

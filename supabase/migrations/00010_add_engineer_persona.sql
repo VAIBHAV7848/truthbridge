@@ -1,11 +1,22 @@
 -- Engineer persona + task assignment system
 
--- ENUMs
-CREATE TYPE engineer_task_status AS ENUM ('OPEN', 'IN_PROGRESS', 'COMPLETED', 'CLOSED');
-CREATE TYPE engineer_task_priority AS ENUM ('LOW', 'MEDIUM', 'HIGH', 'URGENT');
+-- ENUMs (safe creation - check if exists first)
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'engineer_task_status') THEN
+    CREATE TYPE engineer_task_status AS ENUM ('OPEN', 'IN_PROGRESS', 'COMPLETED', 'CLOSED');
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'engineer_task_priority') THEN
+    CREATE TYPE engineer_task_priority AS ENUM ('LOW', 'MEDIUM', 'HIGH', 'URGENT');
+  END IF;
+END $$;
 
 -- engineers table (mirrors structure of authorities)
-CREATE TABLE engineers (
+CREATE TABLE IF NOT EXISTS engineers (
   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   auth_user_id    UUID UNIQUE REFERENCES auth.users(id) ON DELETE SET NULL,
   name            TEXT NOT NULL,
@@ -21,7 +32,7 @@ CREATE TABLE engineers (
 );
 
 -- engineer_tasks table
-CREATE TABLE engineer_tasks (
+CREATE TABLE IF NOT EXISTS engineer_tasks (
   id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   bridge_id         UUID NOT NULL REFERENCES bridges(id) ON DELETE CASCADE,
   bridge_name       TEXT,                          -- denormalized
@@ -39,12 +50,12 @@ CREATE TABLE engineer_tasks (
   completed_at      TIMESTAMPTZ
 );
 
--- Indexes for performance
-CREATE INDEX idx_engineers_auth_user ON engineers(auth_user_id);
-CREATE INDEX idx_engineers_active ON engineers(is_active) WHERE is_active = TRUE;
-CREATE INDEX idx_tasks_assigned_to ON engineer_tasks(assigned_to);
-CREATE INDEX idx_tasks_status ON engineer_tasks(status);
-CREATE INDEX idx_tasks_bridge ON engineer_tasks(bridge_id);
+-- Indexes for performance (idempotent)
+CREATE INDEX IF NOT EXISTS idx_engineers_auth_user ON engineers(auth_user_id);
+CREATE INDEX IF NOT EXISTS idx_engineers_active ON engineers(is_active) WHERE is_active = TRUE;
+CREATE INDEX IF NOT EXISTS idx_tasks_assigned_to ON engineer_tasks(assigned_to);
+CREATE INDEX IF NOT EXISTS idx_tasks_status ON engineer_tasks(status);
+CREATE INDEX IF NOT EXISTS idx_tasks_bridge ON engineer_tasks(bridge_id);
 
 -- Trigger: update updated_at
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -55,16 +66,24 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trg_engineers_updated ON engineers;
 CREATE TRIGGER trg_engineers_updated
   BEFORE UPDATE ON engineers
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS trg_engineer_tasks_updated ON engineer_tasks;
 CREATE TRIGGER trg_engineer_tasks_updated
   BEFORE UPDATE ON engineer_tasks
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- RLS Policies for engineers table
 ALTER TABLE engineers ENABLE ROW LEVEL SECURITY;
+
+-- Drop existing policies to avoid conflicts
+DROP POLICY IF EXISTS "Engineers can view own profile" ON engineers;
+DROP POLICY IF EXISTS "Admins can view all engineers" ON engineers;
+DROP POLICY IF EXISTS "Only super admins can insert engineers" ON engineers;
+DROP POLICY IF EXISTS "Only super admins can update engineers" ON engineers;
 
 -- Engineers can read their own profile
 CREATE POLICY "Engineers can view own profile"
@@ -107,6 +126,13 @@ CREATE POLICY "Only super admins can update engineers"
 
 -- RLS Policies for engineer_tasks table
 ALTER TABLE engineer_tasks ENABLE ROW LEVEL SECURITY;
+
+-- Drop existing policies to avoid conflicts
+DROP POLICY IF EXISTS "Engineers can view own tasks" ON engineer_tasks;
+DROP POLICY IF EXISTS "Admins can view tasks they assigned" ON engineer_tasks;
+DROP POLICY IF EXISTS "Admins can create tasks" ON engineer_tasks;
+DROP POLICY IF EXISTS "Engineers can update own tasks" ON engineer_tasks;
+DROP POLICY IF EXISTS "Admins can update tasks they assigned" ON engineer_tasks;
 
 -- Engineers can view tasks assigned to them
 CREATE POLICY "Engineers can view own tasks"
